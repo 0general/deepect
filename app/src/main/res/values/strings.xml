@@ -1,0 +1,10 @@
+<resources>
+    // ARCore
+    <string name="app_name">ARNavigation</string>
+    <string name="plane_finding">Searching for surfaces&#8230;</string>
+
+    // Navigation
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="tmap_api_key">l7xx3d70f98c7ccd4dc5b69377982a465f6c</string>
+</resources>
