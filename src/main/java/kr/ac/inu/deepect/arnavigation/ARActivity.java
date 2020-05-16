@@ -10,6 +10,7 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -37,6 +38,8 @@ import java.util.concurrent.ExecutionException;
 
 import kr.ac.inu.deepect.R;
 import kr.ac.inu.deepect.arnavigation.navigation.GpsManager;
+import kr.ac.inu.deepect.arnavigation.rendering.LocationNode;
+import kr.ac.inu.deepect.arnavigation.rendering.LocationNodeRender;
 import kr.ac.inu.deepect.arnavigation.utils.ARLocationPermissionHelper;
 
 public class ARActivity extends AppCompatActivity {
@@ -123,10 +126,10 @@ public class ARActivity extends AppCompatActivity {
 
         // Build a renderable from a 2D View.
         // sceneform의 모든 build() 메소드는 CompleableFuture를 반환한다
-        /* CompletableFuture<ViewRenderable> exampleLayout = // "미래에 처리할 업무(Task)로서,  Task 결과가 완료되었을때 값을 리턴하거나, 다른 Task가 실행되도록 발화(trigger)시키는 Task."
+        CompletableFuture<ViewRenderable> exampleLayout = // "미래에 처리할 업무(Task)로서,  Task 결과가 완료되었을때 값을 리턴하거나, 다른 Task가 실행되도록 발화(trigger)시키는 Task."
                 ViewRenderable.builder()
                         .setView(this, R.layout.example_layout)
-                        .build(); */
+                        .build();
 
         // When you build a Renderable, Sceneform loads its resources in the background while returning
         // a CompletableFuture. Call thenAccept(), handle(), or check isDone() before calling get().
@@ -157,7 +160,7 @@ public class ARActivity extends AppCompatActivity {
                             }
 
                             try {
-                                // exampleLayoutRenderable = exampleLayout.get();
+                                exampleLayoutRenderable = exampleLayout.get();
                                 arrowRenderable = arrowFuture.get();
                                 myArrowRenderable = myArrowFuture.get();
                                 targetRenderable = targetFuture.get();
@@ -182,54 +185,77 @@ public class ARActivity extends AppCompatActivity {
                         if (locationScene.mLocationMarkers.size() > 0) {
                             locationScene.mLocationMarkersClear();
                         }
-                        LocationMarker prevLocationMarker;
-                        {
-                            Node node = new Node();
-                            prevLocationMarker = createLocationMarker(0, 0, node);
-                            prevLocationMarker.setAtCameraPosition(true);
-                            node.setRenderable(myArrowRenderable);
-                            locationScene.mLocationMarkers.add(prevLocationMarker);
-                        }
-
+//                        LocationMarker prevLocationMarker;
+//                        {
+//                            Node node = new Node();
+//                            prevLocationMarker = createLocationMarker(0, 0, node);
+//                            prevLocationMarker.setAtCameraPosition(true);
+//                            node.setRenderable(myArrowRenderable);
+//                            locationScene.mLocationMarkers.add(prevLocationMarker);
+//                        }
+//
+//                        for (int i = 0; i < middleNodes.size(); i++) {
+//                            // if (gpsMan.getCurrentLocation().getLongitude())
+//                            LatLon point = middleNodes.get(i);
+//                            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//                                // TODO: Consider calling
+//                                //    ActivityCompat#requestPermissions
+//                                // here to request the missing permissions, and then overriding
+//                                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//                                //                                          int[] grantResults)
+//                                // to handle the case where the user grants the permission. See the documentation
+//                                // for ActivityCompat#requestPermissions for more details.
+//                                return;
+//                            }
+//                            /*
+//                            Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+//                            Log.i(TAG, "now Lat & Lon : " + location.getLatitude() + ", " + location.getLongitude() + ", Accuracy : " + location.getAccuracy());
+//                            Log.i(TAG, "kmyLog2 : " + (SystemClock.elapsedRealtimeNanos() - location.getElapsedRealtimeNanos()));
+//                            if (distFrom(location.getLatitude(), location.getLongitude(), point.getLatitude(), point.getLongitude()) > 100)
+//                                continue;
+//                            */
+//                            Node node = new Node();
+//                            LocationMarker locationMarker = createLocationMarker(
+//                                    point.getLatitude(), point.getLongitude(), node);
+//                            // ~m 이내의 마커만 표시.
+//                            locationMarker.setOnlyRenderWhenWithin(500);
+//                            // 이전 노드가 현재 노드의 방향을 가리키도록 함.
+//                            prevLocationMarker.setLookNode(node);
+//                            prevLocationMarker = locationMarker;
+//
+//                            // 타겟 마커는 현재 points의 가장 마지막 원소만 rendering 하도록.
+//                            /* node.setRenderable((i < middleNodes.size()) ?
+//                                    arrowRenderable : targetRenderable); */
+//                            node.setRenderable(arrowRenderable);
+//                            locationScene.mLocationMarkers.add(locationMarker);
+//                        }
+//                        Node node = new Node();
+//                        LocationMarker locationMarker = createLocationMarker(destination.getLatitude(), destination.getLongitude(), node);
+//                        prevLocationMarker.setLookNode(node);
+//                        prevLocationMarker = locationMarker;
+//                        node.setRenderable(targetRenderable);
+//                        LocationScene.mLocationMarkers.add(locationMarker);
                         for (int i = 0; i < middleNodes.size(); i++) {
-                            // if (gpsMan.getCurrentLocation().getLongitude())
                             LatLon point = middleNodes.get(i);
-                            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                                // TODO: Consider calling
-                                //    ActivityCompat#requestPermissions
-                                // here to request the missing permissions, and then overriding
-                                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                                //                                          int[] grantResults)
-                                // to handle the case where the user grants the permission. See the documentation
-                                // for ActivityCompat#requestPermissions for more details.
-                                return;
-                            }
-                            /*
-                            Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                            Log.i(TAG, "now Lat & Lon : " + location.getLatitude() + ", " + location.getLongitude() + ", Accuracy : " + location.getAccuracy());
-                            Log.i(TAG, "kmyLog2 : " + (SystemClock.elapsedRealtimeNanos() - location.getElapsedRealtimeNanos()));
-                            if (distFrom(location.getLatitude(), location.getLongitude(), point.getLatitude(), point.getLongitude()) > 100)
-                                continue;
-                            */
-                            Node node = new Node();
-                            LocationMarker locationMarker = createLocationMarker(
-                                    point.getLatitude(), point.getLongitude(), node);
-                            // ~m 이내의 마커만 표시.
-                            locationMarker.setOnlyRenderWhenWithin(500);
-                            // 이전 노드가 현재 노드의 방향을 가리키도록 함.
-                            prevLocationMarker.setLookNode(node);
-                            prevLocationMarker = locationMarker;
+                            LocationMarker layoutLocationMarker = createLocationMarker(
+                                    point.getLatitude(), point.getLongitude(), getExampleView());
+                            layoutLocationMarker.setOnlyRenderWhenWithin(500);
 
-                            // 타겟 마커는 현재 points의 가장 마지막 원소만 rendering 하도록.
-                            /* node.setRenderable((i < middleNodes.size()) ?
-                                    arrowRenderable : targetRenderable); */
-                            node.setRenderable(arrowRenderable);
-                            locationScene.mLocationMarkers.add(locationMarker);
+                            layoutLocationMarker.setRenderEvent(new LocationNodeRender() {
+                                @Override
+                                public void render(LocationNode node) {
+                                    View eView = exampleLayoutRenderable.getView();
+                                    TextView distanceTextView = eView.findViewById(R.id.textView2);
+                                    Log.d(TAG, "kmyLog Distance : " + node.getDistance());
+                                    distanceTextView.setText(node.getDistance() + "M");
+                                }
+                            });
+                            // Adding the marker
+                            layoutLocationMarker.lookCamera(true);
+                            locationScene.mLocationMarkers.add(layoutLocationMarker);
                         }
                         Node node = new Node();
                         LocationMarker locationMarker = createLocationMarker(destination.getLatitude(), destination.getLongitude(), node);
-                        prevLocationMarker.setLookNode(node);
-                        prevLocationMarker = locationMarker;
                         node.setRenderable(targetRenderable);
                         LocationScene.mLocationMarkers.add(locationMarker);
                     }
@@ -256,12 +282,11 @@ public class ARActivity extends AppCompatActivity {
         LocationMarker marker = new LocationMarker(latitude, longitude, node);
         marker.setHeight(-10.f);
         marker.setScalingMode(LocationMarker.ScalingMode.SIMPLE_SCALING);
-        marker.setGradualScalingMaxScale(4F);
+        marker.setGradualScalingMaxScale(12F);
         marker.setGradualScalingMinScale(0.5F);
         return marker;
     }
 
-    /*
     private Node getExampleView() {
         Node base = new Node();
         base.setRenderable(exampleLayoutRenderable);
@@ -276,7 +301,6 @@ public class ARActivity extends AppCompatActivity {
         });
         return base;
     }
-    */
 
     /***
      * Example Node of a 3D model

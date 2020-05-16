@@ -224,7 +224,7 @@ public class LocationNode extends AnchorNode {
                     break;
                 case SIMPLE_SCALING:
                     // markerDistance, renderDistance
-                    scale = ((1.0F / markerDistance) * 100);
+                    scale = ((1.0F / markerDistance) * 150);
                     if (scale > gradualScalingMaxScale)
                         scale = gradualScalingMaxScale;
                     else if (scale < gradualScalingMinScale)
