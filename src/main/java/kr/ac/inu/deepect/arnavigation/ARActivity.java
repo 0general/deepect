@@ -91,7 +91,14 @@ public class ARActivity extends AppCompatActivity {
         }
     }
 
-    private static List<LatLon> middleNodes = new ArrayList<LatLon>();
+    private static List<LatLon> middleNodes = null;
+
+    public static void clearMiddleNodes() {
+        if (middleNodes != null) {
+            middleNodes = null;
+        }
+        middleNodes = new ArrayList<LatLon>();
+    }
 
     public static void setMiddleNodes(@NotNull double lat, double lon) {
         LatLon node = new LatLon(lat, lon);
@@ -133,6 +140,9 @@ public class ARActivity extends AppCompatActivity {
 
         // When you build a Renderable, Sceneform loads its resources in the background while returning
         // a CompletableFuture. Call thenAccept(), handle(), or check isDone() before calling get().
+        CompletableFuture<ViewRenderable> exampleFuture = ViewRenderable.builder()
+                .setSource(this, R.layout.example_layout)
+                .build();
         CompletableFuture<ModelRenderable> arrowFuture = ModelRenderable.builder()
                 .setSource(this, R.raw.arrow)
                 .build();
@@ -144,7 +154,7 @@ public class ARActivity extends AppCompatActivity {
                 .build();
 
         CompletableFuture.allOf(
-                // exampleLayout,
+                exampleFuture,
                 arrowFuture,
                 myArrowFuture,
                 targetFuture)
@@ -160,7 +170,7 @@ public class ARActivity extends AppCompatActivity {
                             }
 
                             try {
-                                exampleLayoutRenderable = exampleLayout.get();
+                                exampleLayoutRenderable = exampleFuture.get();
                                 arrowRenderable = arrowFuture.get();
                                 myArrowRenderable = myArrowFuture.get();
                                 targetRenderable = targetFuture.get();
@@ -197,16 +207,6 @@ public class ARActivity extends AppCompatActivity {
 //                        for (int i = 0; i < middleNodes.size(); i++) {
 //                            // if (gpsMan.getCurrentLocation().getLongitude())
 //                            LatLon point = middleNodes.get(i);
-//                            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//                                // TODO: Consider calling
-//                                //    ActivityCompat#requestPermissions
-//                                // here to request the missing permissions, and then overriding
-//                                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-//                                //                                          int[] grantResults)
-//                                // to handle the case where the user grants the permission. See the documentation
-//                                // for ActivityCompat#requestPermissions for more details.
-//                                return;
-//                            }
 //                            /*
 //                            Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 //                            Log.i(TAG, "now Lat & Lon : " + location.getLatitude() + ", " + location.getLongitude() + ", Accuracy : " + location.getAccuracy());
