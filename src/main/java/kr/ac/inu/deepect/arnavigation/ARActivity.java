@@ -1,13 +1,20 @@
 package kr.ac.inu.deepect.arnavigation;
 
+import android.Manifest;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.SystemClock;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import com.google.ar.core.Config;
 import com.google.ar.core.Frame;
@@ -72,9 +79,13 @@ public class ARActivity extends AppCompatActivity {
             this.longitude = longitude;
         }
 
-        public double getLatitude() { return latitude; }
+        public double getLatitude() {
+            return latitude;
+        }
 
-        public double getLongitude() { return longitude; }
+        public double getLongitude() {
+            return longitude;
+        }
     }
 
     private static List<LatLon> middleNodes = new ArrayList<LatLon>();
@@ -107,6 +118,8 @@ public class ARActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.ar_main);
         arSceneView = findViewById(R.id.ar_scene_view);
+
+        final LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
         // Build a renderable from a 2D View.
         // sceneform의 모든 build() 메소드는 CompleableFuture를 반환한다
@@ -181,12 +194,32 @@ public class ARActivity extends AppCompatActivity {
                         for (int i = 0; i < middleNodes.size(); i++) {
                             // if (gpsMan.getCurrentLocation().getLongitude())
                             LatLon point = middleNodes.get(i);
+                            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                                // TODO: Consider calling
+                                //    ActivityCompat#requestPermissions
+                                // here to request the missing permissions, and then overriding
+                                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                //                                          int[] grantResults)
+                                // to handle the case where the user grants the permission. See the documentation
+                                // for ActivityCompat#requestPermissions for more details.
+                                return;
+                            }
+                            /*
+                            Location location = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                            Log.i(TAG, "now Lat & Lon : " + location.getLatitude() + ", " + location.getLongitude() + ", Accuracy : " + location.getAccuracy());
+                            Log.i(TAG, "kmyLog2 : " + (SystemClock.elapsedRealtimeNanos() - location.getElapsedRealtimeNanos()));
+                            if (distFrom(location.getLatitude(), location.getLongitude(), point.getLatitude(), point.getLongitude()) > 100)
+                                continue;
+                            */
                             Node node = new Node();
                             LocationMarker locationMarker = createLocationMarker(
                                     point.getLatitude(), point.getLongitude(), node);
+                            // ~m 이내의 마커만 표시.
+                            locationMarker.setOnlyRenderWhenWithin(500);
                             // 이전 노드가 현재 노드의 방향을 가리키도록 함.
                             prevLocationMarker.setLookNode(node);
                             prevLocationMarker = locationMarker;
+
                             // 타겟 마커는 현재 points의 가장 마지막 원소만 rendering 하도록.
                             /* node.setRenderable((i < middleNodes.size()) ?
                                     arrowRenderable : targetRenderable); */
@@ -222,7 +255,9 @@ public class ARActivity extends AppCompatActivity {
     private LocationMarker createLocationMarker(double latitude, double longitude, Node node) {
         LocationMarker marker = new LocationMarker(latitude, longitude, node);
         marker.setHeight(-10.f);
-        marker.setScalingMode(LocationMarker.ScalingMode.NO_SCALING);
+        marker.setScalingMode(LocationMarker.ScalingMode.SIMPLE_SCALING);
+        marker.setGradualScalingMaxScale(4F);
+        marker.setGradualScalingMinScale(0.5F);
         return marker;
     }
 
@@ -344,4 +379,18 @@ public class ARActivity extends AppCompatActivity {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
     }
+
+//    public static double distFrom(double nowLat, double nowLon, double destLat, double destLon) {
+//        double earthRadius = 6371000; //meters
+//        double dLat = Math.toRadians(destLat-nowLat);
+//        double dLng = Math.toRadians(destLon-nowLon);
+//        double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+//                Math.cos(Math.toRadians(nowLat)) * Math.cos(Math.toRadians(destLat)) *
+//                        Math.sin(dLng/2) * Math.sin(dLng/2);
+//        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+//        double dist = (double) (earthRadius * c);
+//
+//        Log.i(TAG, "kmyLog, Distance = " + String.valueOf(dist));
+//        return dist;
+//    }
 }

@@ -204,20 +204,33 @@ public class LocationNode extends AnchorNode {
 
             switch (scalingMode) {
                 case FIXED_SIZE_ON_SCREEN:
-                    scale = (float) Math.sqrt(directionFromCamera.x * directionFromCamera.x
-                            + directionFromCamera.y * directionFromCamera.y + directionFromCamera.z * directionFromCamera.z);
+                    scale = (float) Math.sqrt(
+                            directionFromCamera.x * directionFromCamera.x +
+                            directionFromCamera.y * directionFromCamera.y +
+                            directionFromCamera.z * directionFromCamera.z);
                     break;
                 case GRADUAL_TO_MAX_RENDER_DISTANCE:
                     float scaleDifference = gradualScalingMaxScale - gradualScalingMinScale;
-                    scale = (gradualScalingMinScale + ((locationScene.getDistanceLimit() - markerDistance) * (scaleDifference / locationScene.getDistanceLimit()))) * renderDistance;
+                    scale = (gradualScalingMinScale + ((locationScene.getDistanceLimit() - markerDistance) *
+                            (scaleDifference / locationScene.getDistanceLimit()))) * renderDistance;
                     break;
                 case GRADUAL_FIXED_SIZE:
                     scale = (float) Math.sqrt(directionFromCamera.x * directionFromCamera.x
-                            + directionFromCamera.y * directionFromCamera.y + directionFromCamera.z * directionFromCamera.z);
+                            + directionFromCamera.y * directionFromCamera.y +
+                            directionFromCamera.z * directionFromCamera.z);
                     float gradualScale = gradualScalingMaxScale - gradualScalingMinScale;
                     gradualScale = gradualScalingMaxScale - (gradualScale / renderDistance * markerDistance);
                     scale *= Math.max(gradualScale, gradualScalingMinScale);
                     break;
+                case SIMPLE_SCALING:
+                    // markerDistance, renderDistance
+                    scale = ((1.0F / markerDistance) * 100);
+                    if (scale > gradualScalingMaxScale)
+                        scale = gradualScalingMaxScale;
+                    else if (scale < gradualScalingMinScale)
+                        scale = gradualScalingMinScale;
+                    else
+                        break;
             }
 
             scale *= scaleModifier;

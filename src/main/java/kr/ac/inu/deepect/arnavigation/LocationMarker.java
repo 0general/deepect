@@ -161,7 +161,8 @@ public class LocationMarker {
         FIXED_SIZE_ON_SCREEN,
         NO_SCALING,
         GRADUAL_TO_MAX_RENDER_DISTANCE,
-        GRADUAL_FIXED_SIZE
+        GRADUAL_FIXED_SIZE,
+        SIMPLE_SCALING
     }
 
     public enum DirectionMode {
