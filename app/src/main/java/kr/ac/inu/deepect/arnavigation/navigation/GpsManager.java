@@ -84,7 +84,7 @@ public class GpsManager {
 
         Boolean isEnable = locManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
 
-        if(!isEnable) {
+        if(isEnable) {
             location = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
         }
 

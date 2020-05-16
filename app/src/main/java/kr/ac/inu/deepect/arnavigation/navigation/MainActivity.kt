@@ -189,6 +189,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
         btnNow.setOnClickListener(btnNowClicked)
         switch1.setOnCheckedChangeListener(btnSwitched)
         switch1.visibility = View.GONE
+        timelayout.visibility = View.GONE
 
         val toggle = ActionBarDrawerToggle(
                 this,
@@ -299,6 +300,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
         if (isSelectionMode) {
             toolbar.setTitle("도착지를 설정하세요")
             switch1.visibility = View.GONE
+            timelayout.visibility = View.GONE
 
             mapView.setOnLongClickListenerCallback(object : TMapView.OnLongClickListenerCallback {
                 override fun onLongPressEvent(
@@ -345,6 +347,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                 val mapData = TMapData()
 
                 switch1.visibility = View.VISIBLE
+                timelayout.visibility = View.VISIBLE
 
 
                 val currentLocation = gpsManager.currentLocation
