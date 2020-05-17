@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:alpha="0.93"
-    android:background="@drawable/example_layout_style"
+    android:background="@drawable/roadsign_layout_style"
     android:orientation="vertical"
     android:padding="30dp">
 
@@ -14,5 +14,6 @@
         android:layout_height="130dp"
         android:gravity="center"
         android:textColor="#fff"
-        android:textSize="130sp" />
+
+        android:textSize="60sp" />
 </LinearLayout>

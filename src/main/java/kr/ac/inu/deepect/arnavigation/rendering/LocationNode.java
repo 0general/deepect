@@ -15,6 +15,7 @@ import java.util.ArrayList;
 
 import kr.ac.inu.deepect.arnavigation.LocationMarker;
 import kr.ac.inu.deepect.arnavigation.LocationScene;
+import kr.ac.inu.deepect.arnavigation.navigation.Vector;
 import kr.ac.inu.deepect.arnavigation.utils.ARUtils;
 
 public class LocationNode extends AnchorNode {
@@ -254,6 +255,16 @@ public class LocationNode extends AnchorNode {
             }
             n.setWorldScale(new Vector3(scale, scale, scale));
         }
+    }
+
+    public double getAngle(Node now, Node n1, Node n2) {
+        Vector3 v1 = Vector3.subtract(now.getWorldPosition(), n1.getWorldPosition());
+        Vector3 v2 = Vector3.subtract(now.getWorldPosition(), n2.getWorldPosition());
+        Vector3 cross = Vector3.cross(v1, v2);
+        if (cross.y < 0)
+            return Vector3.angleBetweenVectors(v1, v2);
+        else
+            return -(Vector3.angleBetweenVectors(v1, v2));
     }
 
     public float getGradualScalingMinScale() {

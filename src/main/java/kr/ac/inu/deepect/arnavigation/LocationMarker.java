@@ -18,6 +18,8 @@ public class LocationMarker {
     // Location in AR terms
     public LocationNode anchorNode;
 
+    public Node cameraNode;
+
     // Node to render
     public Node node;
 
@@ -44,8 +46,12 @@ public class LocationMarker {
 
     public void lookCamera(boolean b) { directionMode = DirectionMode.LOOK_CAMERA; }
 
+    public void setCameraNode(Node node) {
+        cameraNode = node;
+    }
+
     public void setLookNode(Node node) {
-        directionMode = DirectionMode.LOOK_NODE;
+        // directionMode = DirectionMode.LOOK_NODE;
         nodeToLook = node;
     }
 

@@ -1,12 +1,9 @@
 package kr.ac.inu.deepect.arnavigation;
 
-import android.Manifest;
 import android.content.Context;
-import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationManager;
+import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -15,7 +12,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.google.ar.core.Config;
 import com.google.ar.core.Frame;
@@ -127,13 +124,13 @@ public class ARActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.ar_main);
         arSceneView = findViewById(R.id.ar_scene_view);
-        ViewRenderable exampleLayoutRenderables[] = new ViewRenderable[middleNodes.size()];
+        ViewRenderable roadsignLayoutRenderables[] = new ViewRenderable[middleNodes.size()];
 
         // Build a renderable from a 2D View.
         // sceneform의 모든 build() 메소드는 CompleableFuture를 반환한다
 //        CompletableFuture<ViewRenderable> exampleLayout = // "미래에 처리할 업무(Task)로서,  Task 결과가 완료되었을때 값을 리턴하거나, 다른 Task가 실행되도록 발화(trigger)시키는 Task."
 //                ViewRenderable.builder()
-//                        .setView(this, R.layout.example_layout)
+//                        .setView(this, R.layout.roadsign_layout)
 //                        .build();
 
         // When you build a Renderable, Sceneform loads its resources in the background while returning
@@ -141,7 +138,7 @@ public class ARActivity extends AppCompatActivity {
         CompletableFuture<ViewRenderable> exampleFutures[] = new CompletableFuture[middleNodes.size()];
         for (int i = 0; i < exampleFutures.length; i++) {
             exampleFutures[i] = ViewRenderable.builder()
-                    .setView(this, R.layout.example_layout)
+                    .setView(this, R.layout.roadsign_layout)
                     .build();
         }
         CompletableFuture<ModelRenderable> arrowFuture = ModelRenderable.builder()
@@ -195,7 +192,7 @@ public class ARActivity extends AppCompatActivity {
 
                             try {
                                 for (int i = 0; i < exampleFutures.length; i++) {
-                                    exampleLayoutRenderables[i] = exampleFutures[i].get();
+                                    roadsignLayoutRenderables[i] = exampleFutures[i].get();
                                 }
                                 hasFinishedLoading[1] = true;
                             } catch (InterruptedException | ExecutionException ex) {
@@ -219,14 +216,14 @@ public class ARActivity extends AppCompatActivity {
                         if (locationScene.mLocationMarkers.size() > 0) {
                             locationScene.mLocationMarkersClear();
                         }
-//                        LocationMarker prevLocationMarker;
-//                        {
-//                            Node node = new Node();
-//                            prevLocationMarker = createLocationMarker(0, 0, node);
-//                            prevLocationMarker.setAtCameraPosition(true);
-//                            node.setRenderable(myArrowRenderable);
-//                            locationScene.mLocationMarkers.add(prevLocationMarker);
-//                        }
+                        LocationMarker camera;
+                        {
+                            Node node = new Node();
+                            camera = createLocationMarker(0, 0, node);
+                            camera.setAtCameraPosition(true);
+                            locationScene.mLocationMarkers.add(camera);
+                        }
+                        LocationMarker prevLocationMarker = null;
 //
 //                        for (int i = 0; i < middleNodes.size(); i++) {
 //                            // if (gpsMan.getCurrentLocation().getLongitude())
@@ -262,26 +259,58 @@ public class ARActivity extends AppCompatActivity {
                         for (int i = 0; i < middleNodes.size(); i++) {
                             final int finalI = i;
                             LatLon point = middleNodes.get(i);
-                            Node node = getExampleView(exampleLayoutRenderables[i]);
+                            Node node = getExampleView(roadsignLayoutRenderables[i]);
                             LocationMarker layoutLocationMarker = createLocationMarker(
                                     point.getLatitude(), point.getLongitude(), node);
+                            layoutLocationMarker.setCameraNode(camera.node);
+
+                            if (prevLocationMarker != null) {
+                                prevLocationMarker.setLookNode(node);
+                            }
+                            prevLocationMarker = layoutLocationMarker;
+
                             layoutLocationMarker.setScalingMode(LocationMarker.ScalingMode.SIMPLE_SCALING);
                             layoutLocationMarker.setGradualScalingMaxScale(20F);
                             layoutLocationMarker.setGradualScalingMinScale(0.5F);
                             layoutLocationMarker.setOnlyRenderWhenWithin(500);
-                            Log.d(TAG, "kmyLog, nodeId : " + layoutLocationMarker.node);
-
 
                             layoutLocationMarker.setRenderEvent(new LocationNodeRender() {
                                 @Override
                                 public void render(LocationNode node) {
-                                    ViewRenderable exampleLayoutRenderable = (ViewRenderable)exampleLayoutRenderables[finalI];
-                                    Log.d(TAG, "kmyLog, in render nodeId : " + node);
-                                    View eView = exampleLayoutRenderable.getView();
-                                    TextView distanceTextView = eView.findViewById(R.id.textView);
+                                    ViewRenderable roadsignLayoutRendarable = roadsignLayoutRenderables[finalI];
+                                    // Log.d(TAG, "kmyLog, in render nodeId : " + node);
+                                    double angle = node.getAngle(layoutLocationMarker.cameraNode, layoutLocationMarker.node, layoutLocationMarker.nodeToLook);
+                                    Log.d(TAG, "kmyLog, i, lat, lon : " + finalI + ", " + layoutLocationMarker.getLatitude() + ", " + layoutLocationMarker.getLongitude());
+                                    Log.d(TAG, "kmyLog, i, angle : " + finalI + ", " + angle);
+                                    View eView = roadsignLayoutRendarable.getView();
+                                    TextView roadsignTextView = eView.findViewById(R.id.textView);
+                                    roadsignTextView.setTypeface(null, Typeface.BOLD);
                                     int index = finalI + 1;
                                     String indexString = Integer.toString(index);
-                                    distanceTextView.setText(indexString);
+                                    String arrow;
+//                                    if (angle >= 30 && angle < 60)
+//                                        arrow = "↗";
+//                                    else if (angle <= -30 && angle > -60)
+//                                        arrow = "↖";
+//                                    else if (angle >= 60 && angle < 120)
+//                                        arrow = "→";
+//                                    else if (angle <= -60 && angle > -120)
+//                                        arrow = "←";
+//                                    else if (angle < 30 && angle > -30)
+//                                        arrow = "↑";
+//                                    else if (angle >= 120 && angle <= 180)
+//                                        arrow = "↘";
+//                                    else if (angle <= -120 && angle >= -180)
+//                                        arrow = "↙";
+//                                    else
+//                                        arrow = "";
+                                    if (angle >= 30)
+                                        arrow = "→";
+                                    else if (angle <= -30)
+                                        arrow = "←";
+                                    else
+                                        arrow = "";
+                                    roadsignTextView.setText(indexString + '\n' +  arrow);
                                 }
                             });
                             // Adding the marker
@@ -294,6 +323,9 @@ public class ARActivity extends AppCompatActivity {
                         locationMarker.setScalingMode(LocationMarker.ScalingMode.SIMPLE_SCALING);
                         locationMarker.setGradualScalingMaxScale(5F);
                         locationMarker.setGradualScalingMinScale(4F);
+                        prevLocationMarker.setLookNode(node);
+                        prevLocationMarker = locationMarker;
+
                         Log.d(TAG, "kmyLog, marker scaling mode : " + locationMarker.getScalingMode() + ", marker max scale : " + locationMarker.getGradualScalingMaxScale());
                         LocationScene.mLocationMarkers.add(locationMarker);
                     }
