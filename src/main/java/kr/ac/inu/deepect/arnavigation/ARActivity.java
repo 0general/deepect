@@ -44,7 +44,7 @@ import kr.ac.inu.deepect.arnavigation.utils.ARLocationPermissionHelper;
 
 public class ARActivity extends AppCompatActivity {
     private boolean installRequested;
-    private boolean hasFinishedLoading = false;
+    private boolean hasFinishedLoading[] = { false, false };
 
     private ArSceneView arSceneView;
 
@@ -54,7 +54,6 @@ public class ARActivity extends AppCompatActivity {
     private ModelRenderable arrowRenderable;
     private ModelRenderable myArrowRenderable;
     private ModelRenderable targetRenderable;
-    private ViewRenderable exampleLayoutRenderable;
 
     private static final String TAG = "LocationActivity";
 
@@ -128,21 +127,23 @@ public class ARActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.ar_main);
         arSceneView = findViewById(R.id.ar_scene_view);
-
-        final LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        ViewRenderable exampleLayoutRenderables[] = new ViewRenderable[middleNodes.size()];
 
         // Build a renderable from a 2D View.
         // sceneform의 모든 build() 메소드는 CompleableFuture를 반환한다
-        CompletableFuture<ViewRenderable> exampleLayout = // "미래에 처리할 업무(Task)로서,  Task 결과가 완료되었을때 값을 리턴하거나, 다른 Task가 실행되도록 발화(trigger)시키는 Task."
-                ViewRenderable.builder()
-                        .setView(this, R.layout.example_layout)
-                        .build();
+//        CompletableFuture<ViewRenderable> exampleLayout = // "미래에 처리할 업무(Task)로서,  Task 결과가 완료되었을때 값을 리턴하거나, 다른 Task가 실행되도록 발화(trigger)시키는 Task."
+//                ViewRenderable.builder()
+//                        .setView(this, R.layout.example_layout)
+//                        .build();
 
         // When you build a Renderable, Sceneform loads its resources in the background while returning
         // a CompletableFuture. Call thenAccept(), handle(), or check isDone() before calling get().
-        CompletableFuture<ViewRenderable> exampleFuture = ViewRenderable.builder()
-                .setSource(this, R.layout.example_layout)
-                .build();
+        CompletableFuture<ViewRenderable> exampleFutures[] = new CompletableFuture[middleNodes.size()];
+        for (int i = 0; i < exampleFutures.length; i++) {
+            exampleFutures[i] = ViewRenderable.builder()
+                    .setView(this, R.layout.example_layout)
+                    .build();
+        }
         CompletableFuture<ModelRenderable> arrowFuture = ModelRenderable.builder()
                 .setSource(this, R.raw.arrow)
                 .build();
@@ -154,7 +155,6 @@ public class ARActivity extends AppCompatActivity {
                 .build();
 
         CompletableFuture.allOf(
-                exampleFuture,
                 arrowFuture,
                 myArrowFuture,
                 targetFuture)
@@ -170,23 +170,47 @@ public class ARActivity extends AppCompatActivity {
                             }
 
                             try {
-                                exampleLayoutRenderable = exampleFuture.get();
                                 arrowRenderable = arrowFuture.get();
                                 myArrowRenderable = myArrowFuture.get();
                                 targetRenderable = targetFuture.get();
-                                hasFinishedLoading = true;
+                                hasFinishedLoading[0] = true;
                             } catch (InterruptedException | ExecutionException ex) {
                                 DemoUtils.displayError(this, "Unable to load renderables", ex);
                             }
                             return null;
                         });
 
+        CompletableFuture.allOf(
+                exampleFutures)
+                .handle(
+                        (notUsed, throwable) -> {
+                            // When you build a Renderable, Sceneform loads its resources in the background while
+                            // returning a CompletableFuture. Call handle(), thenAccept(), or check isDone()
+                            // before calling get().
+
+                            if (throwable != null) {
+                                DemoUtils.displayError(this, "Unable to load renderables", throwable);
+                                return null;
+                            }
+
+                            try {
+                                for (int i = 0; i < exampleFutures.length; i++) {
+                                    exampleLayoutRenderables[i] = exampleFutures[i].get();
+                                }
+                                hasFinishedLoading[1] = true;
+                            } catch (InterruptedException | ExecutionException ex) {
+                                DemoUtils.displayError(this, "Unable to load renderables", ex);
+                            }
+                            return null;
+                        });
+
+
         // Set an update listener on the Scene that will hide the loading message once a Plane is
         // detected.
         arSceneView
                 .getScene()
                 .addOnUpdateListener(frameTime -> {
-                    if (!hasFinishedLoading) {
+                    if (!hasFinishedLoading[0] || !hasFinishedLoading[1]) {
                         return;
                     }
                     if (locationScene == null) {
@@ -236,18 +260,25 @@ public class ARActivity extends AppCompatActivity {
 //                        node.setRenderable(targetRenderable);
 //                        LocationScene.mLocationMarkers.add(locationMarker);
                         for (int i = 0; i < middleNodes.size(); i++) {
+                            final int finalI = i;
                             LatLon point = middleNodes.get(i);
+                            Node node = getExampleView(exampleLayoutRenderables[i]);
                             LocationMarker layoutLocationMarker = createLocationMarker(
-                                    point.getLatitude(), point.getLongitude(), getExampleView());
+                                    point.getLatitude(), point.getLongitude(), node);
                             layoutLocationMarker.setOnlyRenderWhenWithin(500);
+                            Log.d(TAG, "kmyLog, nodeId : " + layoutLocationMarker.node);
+
 
                             layoutLocationMarker.setRenderEvent(new LocationNodeRender() {
                                 @Override
                                 public void render(LocationNode node) {
+                                    ViewRenderable exampleLayoutRenderable = (ViewRenderable)exampleLayoutRenderables[finalI];
+                                    Log.d(TAG, "kmyLog, in render nodeId : " + node);
                                     View eView = exampleLayoutRenderable.getView();
                                     TextView distanceTextView = eView.findViewById(R.id.textView2);
-                                    Log.d(TAG, "kmyLog Distance : " + node.getDistance());
-                                    distanceTextView.setText(node.getDistance() + "M");
+                                    int index = finalI + 1;
+                                    String indexString = Integer.toString(index);
+                                    distanceTextView.setText(indexString);
                                 }
                             });
                             // Adding the marker
@@ -259,8 +290,6 @@ public class ARActivity extends AppCompatActivity {
                         node.setRenderable(targetRenderable);
                         LocationScene.mLocationMarkers.add(locationMarker);
                     }
-
-
 
                     Frame frame = arSceneView.getArFrame();
                     if (frame == null) {
@@ -280,16 +309,17 @@ public class ARActivity extends AppCompatActivity {
 
     private LocationMarker createLocationMarker(double latitude, double longitude, Node node) {
         LocationMarker marker = new LocationMarker(latitude, longitude, node);
-        marker.setHeight(-10.f);
+        marker.setHeight(0);
         marker.setScalingMode(LocationMarker.ScalingMode.SIMPLE_SCALING);
-        marker.setGradualScalingMaxScale(12F);
+        marker.setGradualScalingMaxScale(20F);
         marker.setGradualScalingMinScale(0.5F);
         return marker;
     }
 
-    private Node getExampleView() {
+    private Node getExampleView(ViewRenderable exampleLayoutRenderable) {
         Node base = new Node();
         base.setRenderable(exampleLayoutRenderable);
+        Log.d(TAG, "kmyLog : " + base.getRenderable());
         Context c = this;
         // Add  listeners etc here
         View eView = exampleLayoutRenderable.getView();

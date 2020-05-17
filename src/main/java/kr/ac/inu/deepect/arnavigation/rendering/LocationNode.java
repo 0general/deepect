@@ -1,5 +1,7 @@
 package kr.ac.inu.deepect.arnavigation.rendering;
 
+import android.util.Log;
+
 import com.google.ar.core.Anchor;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.FrameTime;
