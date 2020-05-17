@@ -4,22 +4,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:alpha="0.93"
-    android:background="#a70a04"
+    android:background="@drawable/example_layout_style"
     android:orientation="vertical"
     android:padding="30dp">
 
     <TextView
         android:id="@+id/textView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textColor="#fff" />
-
-    <TextView
-        android:id="@+id/textView2"
-        android:layout_width="130sp"
-        android:layout_height="130sp"
-        android:layout_weight="1"
+        android:layout_width="130dp"
+        android:layout_height="130dp"
         android:gravity="center"
         android:textColor="#fff"
-        android:textSize="100sp" />
+        android:textSize="130sp" />
 </LinearLayout>

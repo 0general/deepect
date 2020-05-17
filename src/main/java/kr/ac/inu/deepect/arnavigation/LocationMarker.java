@@ -28,7 +28,7 @@ public class LocationMarker {
     private float scaleModifier = 1F;
     private float height = 0F;
     private int onlyRenderWhenWithin = Integer.MAX_VALUE;
-    private ScalingMode scalingMode = ScalingMode.FIXED_SIZE_ON_SCREEN;
+    private ScalingMode scalingMode = ScalingMode.NO_SCALING;
     private float gradualScalingMinScale = 0.8F;
     private float gradualScalingMaxScale = 1.4F;
     private boolean isAtCameraPosition = false;

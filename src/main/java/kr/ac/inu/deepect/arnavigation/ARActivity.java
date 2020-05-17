@@ -265,6 +265,9 @@ public class ARActivity extends AppCompatActivity {
                             Node node = getExampleView(exampleLayoutRenderables[i]);
                             LocationMarker layoutLocationMarker = createLocationMarker(
                                     point.getLatitude(), point.getLongitude(), node);
+                            layoutLocationMarker.setScalingMode(LocationMarker.ScalingMode.SIMPLE_SCALING);
+                            layoutLocationMarker.setGradualScalingMaxScale(20F);
+                            layoutLocationMarker.setGradualScalingMinScale(0.5F);
                             layoutLocationMarker.setOnlyRenderWhenWithin(500);
                             Log.d(TAG, "kmyLog, nodeId : " + layoutLocationMarker.node);
 
@@ -275,7 +278,7 @@ public class ARActivity extends AppCompatActivity {
                                     ViewRenderable exampleLayoutRenderable = (ViewRenderable)exampleLayoutRenderables[finalI];
                                     Log.d(TAG, "kmyLog, in render nodeId : " + node);
                                     View eView = exampleLayoutRenderable.getView();
-                                    TextView distanceTextView = eView.findViewById(R.id.textView2);
+                                    TextView distanceTextView = eView.findViewById(R.id.textView);
                                     int index = finalI + 1;
                                     String indexString = Integer.toString(index);
                                     distanceTextView.setText(indexString);
@@ -288,6 +291,10 @@ public class ARActivity extends AppCompatActivity {
                         Node node = new Node();
                         LocationMarker locationMarker = createLocationMarker(destination.getLatitude(), destination.getLongitude(), node);
                         node.setRenderable(targetRenderable);
+                        locationMarker.setScalingMode(LocationMarker.ScalingMode.SIMPLE_SCALING);
+                        locationMarker.setGradualScalingMaxScale(5F);
+                        locationMarker.setGradualScalingMinScale(4F);
+                        Log.d(TAG, "kmyLog, marker scaling mode : " + locationMarker.getScalingMode() + ", marker max scale : " + locationMarker.getGradualScalingMaxScale());
                         LocationScene.mLocationMarkers.add(locationMarker);
                     }
 
@@ -310,9 +317,6 @@ public class ARActivity extends AppCompatActivity {
     private LocationMarker createLocationMarker(double latitude, double longitude, Node node) {
         LocationMarker marker = new LocationMarker(latitude, longitude, node);
         marker.setHeight(0);
-        marker.setScalingMode(LocationMarker.ScalingMode.SIMPLE_SCALING);
-        marker.setGradualScalingMaxScale(20F);
-        marker.setGradualScalingMinScale(0.5F);
         return marker;
     }
 
