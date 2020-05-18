@@ -1,6 +1,7 @@
 package kr.ac.inu.deepect.arnavigation.navigation
 
 import android.app.Activity
+import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -93,18 +94,17 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
             //gps = TMapGpsManager(this)
             initView()
 
+            checkPermission()
+
             GpsManager.init(this)
             gpsManager = GpsManager.getInstance()
             gpsManager.setOnLocationListener(locationListener)
-
-
             pathManager = PathManager.getInstance()
-
             directionManager = DirectionManager().getInstance()
 
 
-            checkPermission()
-
+            val locationManager = this.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000L, 1.0F, locationListener)
 
             val button = findViewById<Button>(R.id.button)
             button.setOnClickListener{
@@ -112,11 +112,11 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                 startActivity(intent)
             }
 
-
-            /*btnPath.setOnClickListener {
-                setNavigationMode(true)
+            connectserver.setOnClickListener {
+                val connetion = ConnectServer()
+                connetion.start()
             }
-*/
+
             moveToCurrentLocation()
         } catch (e: Exception){
             Log.d("Exception : ", "cant initialize ${e.message}")
@@ -619,6 +619,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                         setDestination(mapPoint)
                         mapView.setCenterPoint(longitude, latitude)
                         appendToHistoryFile(name!!, latitude, longitude)
+
                     }
 
 
@@ -680,6 +681,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
     ///////////////////////////////////////////////////////////////////////////////////////////
     val locationListener = object : LocationListener{
         override fun onLocationChanged(location: Location?) {
+
             try {
                 if(location != null) {
                     val distanceFromPrev: Float = location.distanceTo(gpsManager.getLastLocation())
@@ -688,25 +690,29 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                         gpsManager.setLastLocation(location)
 
                         mapView.setLocationPoint(location.longitude , location.latitude)
+                        mapView.setCenterPoint(location.longitude, location.latitude)
                         if(navigationMode){
                             moveToCurrentLocation()
                             //updateDirection()
                         }
                     }
                 }
+
+                Log.d("테스트", location.toString())
+
             } catch (e : Exception){ }
         }
 
         override fun onProviderDisabled(provider: String?) {
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            Log.d("Provider변경", provider)
         }
 
         override fun onProviderEnabled(provider: String?) {
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            Log.d("Provider변경", provider)
         }
 
         override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            Log.d("Provider변경", provider)
         }
     }
 

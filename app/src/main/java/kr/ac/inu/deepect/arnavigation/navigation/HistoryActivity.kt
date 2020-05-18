@@ -35,6 +35,7 @@ class HistoryActivity : AppCompatActivity() {
                 if(file.exists()){
                     file.delete()
                 }
+
             } catch (e : Exception){
                 Log.d("Erase", e.message)
             }

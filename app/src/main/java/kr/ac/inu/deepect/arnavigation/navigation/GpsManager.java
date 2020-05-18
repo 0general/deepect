@@ -14,7 +14,7 @@ import androidx.core.content.ContextCompat;
 
 
 
-@SuppressWarnings("deprecation")
+
 public class GpsManager {
     private static final int REQUEST_LOCATION = 0x123456;
     private static boolean init = false;
@@ -31,7 +31,8 @@ public class GpsManager {
 
     public void start() {
         try {
-            locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 3, locationListener);
+            locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000L, 1, locationListener);
+            locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000L,1, locationListener);
         } catch(SecurityException ex) {
         }
     }
@@ -70,7 +71,8 @@ public class GpsManager {
             ActivityCompat.requestPermissions(appContext, new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_LOCATION);
         }
         this.locationListener = locationListener;
-        locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 3, locationListener);
+        locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000L, 1, locationListener);
+        locManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000L, 1, locationListener);
 
     }
 
@@ -80,15 +82,11 @@ public class GpsManager {
         }
 
         Location location;
-        location = locManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        location = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 
-        Boolean isEnable = locManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
-
-        if(isEnable) {
-            location = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        if(location == null){
+            location = locManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         }
-
-
 
         return location;
 
