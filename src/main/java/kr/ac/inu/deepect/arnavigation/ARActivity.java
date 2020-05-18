@@ -270,9 +270,9 @@ public class ARActivity extends AppCompatActivity {
                             prevLocationMarker = layoutLocationMarker;
 
                             layoutLocationMarker.setScalingMode(LocationMarker.ScalingMode.SIMPLE_SCALING);
-                            layoutLocationMarker.setGradualScalingMaxScale(20F);
-                            layoutLocationMarker.setGradualScalingMinScale(0.5F);
-                            layoutLocationMarker.setOnlyRenderWhenWithin(500);
+                            layoutLocationMarker.setGradualScalingMaxScale(6F);
+                            layoutLocationMarker.setGradualScalingMinScale(1F);
+                            layoutLocationMarker.setOnlyRenderWhenWithin(400);
 
                             layoutLocationMarker.setRenderEvent(new LocationNodeRender() {
                                 @Override
@@ -280,8 +280,8 @@ public class ARActivity extends AppCompatActivity {
                                     ViewRenderable roadsignLayoutRendarable = roadsignLayoutRenderables[finalI];
                                     // Log.d(TAG, "kmyLog, in render nodeId : " + node);
                                     double angle = node.getAngle(layoutLocationMarker.cameraNode, layoutLocationMarker.node, layoutLocationMarker.nodeToLook);
-                                    Log.d(TAG, "kmyLog, i, lat, lon : " + finalI + ", " + layoutLocationMarker.getLatitude() + ", " + layoutLocationMarker.getLongitude());
-                                    Log.d(TAG, "kmyLog, i, angle : " + finalI + ", " + angle);
+                                    Log.d(TAG, "kmyLog, scale :" + finalI + ", " + node.getScale());
+
                                     View eView = roadsignLayoutRendarable.getView();
                                     TextView roadsignTextView = eView.findViewById(R.id.textView);
                                     roadsignTextView.setTypeface(null, Typeface.BOLD);
@@ -321,8 +321,8 @@ public class ARActivity extends AppCompatActivity {
                         LocationMarker locationMarker = createLocationMarker(destination.getLatitude(), destination.getLongitude(), node);
                         node.setRenderable(targetRenderable);
                         locationMarker.setScalingMode(LocationMarker.ScalingMode.SIMPLE_SCALING);
-                        locationMarker.setGradualScalingMaxScale(5F);
-                        locationMarker.setGradualScalingMinScale(4F);
+                        locationMarker.setGradualScalingMaxScale(4F);
+                        locationMarker.setGradualScalingMinScale(1F);
                         prevLocationMarker.setLookNode(node);
                         prevLocationMarker = locationMarker;
 

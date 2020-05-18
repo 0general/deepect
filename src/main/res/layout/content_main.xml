@@ -15,9 +15,13 @@
         android:id = "@+id/relativeContent">
 
         <FrameLayout
+            android:id="@+id/frameMap"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:id="@+id/frameMap">
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginEnd="0dp"
+            android:layout_marginBottom="0dp">
 
         </FrameLayout>
 
@@ -28,50 +32,51 @@
             android:layout_margin="10dp"
             android:text="나침반" />
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:id="@+id/btnPath"
-            android:layout_alignRight="@+id/frameMap"
-            android:layout_alignBottom="@+id/frameMap"
-            android:layout_marginStart="16dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginBottom="16dp" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-
+        <Button
+            android:background="@drawable/location_icon"
             android:id="@+id/btnNow"
+            android:scaleType="fitCenter"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:layout_alignRight="@+id/frameMap"
-            android:layout_alignBottom="@+id/frameMap"
-            android:layout_marginStart="16dp"
-            android:layout_marginLeft="16dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginRight="16dp"
-            android:layout_marginBottom="80dp"
-            />
+            android:layout_marginLeft="355dp"
+            android:layout_marginTop="580dp" />
+
+        <Button
+            android:id="@+id/btnPath"
+            android:paddingLeft="7dip"
+            android:drawableLeft="@drawable/road_find_icon2"
+            android:textSize="24sp"
+            android:text="길찾기"
+            android:background="@drawable/button_design"
+            android:layout_width="130dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="640dp"
+            android:layout_marginLeft="270dp"/>
 
         <Button
             android:id="@+id/button"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="610dp"
-            android:layout_marginLeft="25dp"
+            android:layout_width="130dp"
+            android:layout_height="50dp"
+            android:layout_marginTop="640dp"
+            android:layout_marginLeft="10dp"
             android:text="AR 모드"
-            android:background="#ee0000"
+            android:textSize="24sp"
+            android:background="@drawable/button_design"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/ar_scene_view"
             app:layout_constraintVertical_bias="0.197" />
 
+        <TextView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginLeft="355dp"
+            android:layout_marginTop="580dp"
+            android:background="@drawable/button_design"/>
+
         <RelativeLayout
+            android:id="@+id/timelayout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignEnd="@+id/frameMap"
@@ -102,8 +107,5 @@
 
                 />
         </RelativeLayout>
-
-
-
     </RelativeLayout>
 </RelativeLayout>

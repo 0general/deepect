@@ -60,7 +60,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
     var Start_Point : TMapPoint? = null
     var Destination_Point : TMapPoint? = null
-    var Current_Location : Location? = null
+
 
     var start  = false
 
@@ -189,6 +189,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
         btnNow.setOnClickListener(btnNowClicked)
         switch1.setOnCheckedChangeListener(btnSwitched)
         switch1.visibility = View.GONE
+        timelayout.visibility = View.GONE
 
         val toggle = ActionBarDrawerToggle(
                 this,
@@ -217,7 +218,6 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
     private fun moveToCurrentLocation() {
         try{
             val currentLocation = gpsManager.getCurrentLocation()
-            Current_Location = currentLocation
             if (currentLocation != null) {
                 mapView.setLocationPoint(currentLocation.longitude, currentLocation.latitude)
                 mapView.setCenterPoint(currentLocation.longitude, currentLocation.latitude)
@@ -300,6 +300,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
         if (isSelectionMode) {
             toolbar.setTitle("도착지를 설정하세요")
             switch1.visibility = View.GONE
+            timelayout.visibility = View.GONE
 
             mapView.setOnLongClickListenerCallback(object : TMapView.OnLongClickListenerCallback {
                 override fun onLongPressEvent(
@@ -346,10 +347,15 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                 val mapData = TMapData()
 
                 switch1.visibility = View.VISIBLE
+                timelayout.visibility = View.VISIBLE
 
 
-                //val currentLocation = Current_Location
                 val currentLocation = gpsManager.currentLocation
+                if (currentLocation != null) {
+                    mapView.setLocationPoint(currentLocation.longitude, currentLocation.latitude)
+                    mapView.setCenterPoint(currentLocation.longitude, currentLocation.latitude)
+                }
+
                 val startPoint = TMapPoint(currentLocation!!.latitude, currentLocation.longitude)
 
                 val endpoint = destination
@@ -692,15 +698,18 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
         }
 
         override fun onProviderDisabled(provider: String?) {
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            // TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            Log.d("Exception1 : ", provider)
         }
 
         override fun onProviderEnabled(provider: String?) {
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            // TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            Log.d("Exception2 : ", provider)
         }
 
         override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            // TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            Log.d("Exception3 : ", provider)
         }
     }
 
@@ -728,10 +737,6 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
             }else {
                 mapView.setCompassMode(false)
             }
-
         }
     }
-
-
-
 }

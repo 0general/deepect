@@ -71,6 +71,7 @@ public class GpsManager {
         }
         this.locationListener = locationListener;
         locManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 3, locationListener);
+
     }
 
     public Location getCurrentLocation() {
@@ -79,8 +80,15 @@ public class GpsManager {
         }
 
         Location location;
+        location = locManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
-        location = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        Boolean isEnable = locManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+        if(isEnable) {
+            location = locManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        }
+
+
 
         return location;
 
