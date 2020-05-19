@@ -103,19 +103,16 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
             directionManager = DirectionManager().getInstance()
 
 
-            val locationManager = this.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000L, 1.0F, locationListener)
 
-            val button = findViewById<Button>(R.id.button)
-            button.setOnClickListener{
+            btnAR.setOnClickListener{
                 val intent = Intent(this, ARActivity::class.java)
                 startActivity(intent)
             }
 
-            connectserver.setOnClickListener {
+            /*connectserver.setOnClickListener {
                 val connetion = ConnectServer()
                 connetion.start()
-            }
+            }*/
 
             moveToCurrentLocation()
         } catch (e: Exception){
@@ -147,6 +144,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
         try{
             timer.cancel()
             gpsManager.stop()
+
         } catch(e : Exception){
 
         }
@@ -165,6 +163,8 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
     private fun initView() {
         setSupportActionBar(toolbar)
+        toolbar.setTitle("반갑습니다!")
+        toolbar.setTitleTextColor(resources.getColor(R.color.colorBlack))
 
         //setMapIcon()
         mapView.setSKTMapApiKey(getString(R.string.tmap_api_key))
@@ -190,6 +190,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
         switch1.setOnCheckedChangeListener(btnSwitched)
         switch1.visibility = View.GONE
         timelayout.visibility = View.GONE
+        btnAR.visibility = View.GONE
 
         val toggle = ActionBarDrawerToggle(
                 this,
@@ -261,7 +262,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                         Log.d("nearestPoint", "${nearestPoint}" )
 
                     } else { // 여기서부터 조져야돼
-                        Log.d("여기가 오냐","작동되긴해?")
+
                         timer.cancel()
                         val builder = AlertDialog.Builder(this)
                                 .setTitle("안내")
@@ -301,6 +302,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
             toolbar.setTitle("도착지를 설정하세요")
             switch1.visibility = View.GONE
             timelayout.visibility = View.GONE
+            btnAR.visibility = View.GONE
 
             mapView.setOnLongClickListenerCallback(object : TMapView.OnLongClickListenerCallback {
                 override fun onLongPressEvent(
@@ -348,6 +350,8 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
                 switch1.visibility = View.VISIBLE
                 timelayout.visibility = View.VISIBLE
+                btnAR.visibility = View.VISIBLE
+                toolbar.setTitle("주변을 조심하세요!")
 
 
                 val currentLocation = gpsManager.currentLocation
@@ -373,13 +377,13 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                                     Log.d("totaltime","${ParseJson.totalTime}")
 
                                     val now = System.currentTimeMillis()
-                                    Log.d("now", "${now}")
+                                    //Log.d("now", "${now}")
                                     val expectedtime : Long = now + (ParseJson.totalTime!!.toLong()*1000L)
-                                    Log.d("et", "${expectedtime}")
+                                    //Log.d("et", "${expectedtime}")
                                     val date1 =Date(expectedtime)
-                                    val sdfNow = SimpleDateFormat("yyyy/MM/dd HH:mm:ss")
+                                    val sdfNow = SimpleDateFormat("HH:MM")
                                     val formatDate = sdfNow.format(date1)
-                                    totaltime.text = formatDate
+                                    totaltime.text = "${formatDate} 도착예정"
 
 
                                     runOnUiThread(object : Runnable {
@@ -619,6 +623,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                         setDestination(mapPoint)
                         mapView.setCenterPoint(longitude, latitude)
                         appendToHistoryFile(name!!, latitude, longitude)
+                        Log.d("시발", "여기오냐")
 
                     }
 
@@ -672,6 +677,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
             val bw = BufferedWriter(FileWriter(File(filesDir, "history.txt"), true))
             bw.append(String.format("%s %f %f", name, longitude, latitude))
             bw.newLine()
+            Log.d("버퍼", "${bw}")
             bw.close()
         } catch (e : Exception){
             Log.d("FileWirteException", e.message)
