@@ -1,6 +1,7 @@
 package kr.ac.inu.deepect.arnavigation.navigation
 
 import android.app.Activity
+import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -88,35 +89,32 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
         setContentView(R.layout.activity_main)
         mapView = TMapView(this)
+        Toast.makeText(this, "실제 위치와 50M 정도 차이날 수 있습니다", Toast.LENGTH_SHORT).show()
 
         try {
             //gps = TMapGpsManager(this)
             initView()
 
+            checkPermission()
+
             GpsManager.init(this)
             gpsManager = GpsManager.getInstance()
             gpsManager.setOnLocationListener(locationListener)
-
-
             pathManager = PathManager.getInstance()
-
             directionManager = DirectionManager().getInstance()
 
 
-            checkPermission()
 
-
-            val button = findViewById<Button>(R.id.button)
-            button.setOnClickListener{
+            btnAR.setOnClickListener{
                 val intent = Intent(this, ARActivity::class.java)
                 startActivity(intent)
             }
 
-
-            /*btnPath.setOnClickListener {
-                setNavigationMode(true)
+            connectserver.setOnClickListener {
+                val connetion = ConnectServer()
+                connetion.start()
             }
-*/
+
             moveToCurrentLocation()
         } catch (e: Exception){
             Log.d("Exception : ", "cant initialize ${e.message}")
@@ -147,6 +145,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
         try{
             timer.cancel()
             gpsManager.stop()
+
         } catch(e : Exception){
 
         }
@@ -165,6 +164,8 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
     private fun initView() {
         setSupportActionBar(toolbar)
+        toolbar.setTitle("반갑습니다!")
+        toolbar.setTitleTextColor(resources.getColor(R.color.colorBlack))
 
         //setMapIcon()
         mapView.setSKTMapApiKey(getString(R.string.tmap_api_key))
@@ -190,6 +191,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
         switch1.setOnCheckedChangeListener(btnSwitched)
         switch1.visibility = View.GONE
         timelayout.visibility = View.GONE
+        btnAR.visibility = View.GONE
 
         val toggle = ActionBarDrawerToggle(
                 this,
@@ -261,7 +263,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                         Log.d("nearestPoint", "${nearestPoint}" )
 
                     } else { // 여기서부터 조져야돼
-                        Log.d("여기가 오냐","작동되긴해?")
+
                         timer.cancel()
                         val builder = AlertDialog.Builder(this)
                                 .setTitle("안내")
@@ -301,6 +303,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
             toolbar.setTitle("도착지를 설정하세요")
             switch1.visibility = View.GONE
             timelayout.visibility = View.GONE
+            btnAR.visibility = View.GONE
 
             mapView.setOnLongClickListenerCallback(object : TMapView.OnLongClickListenerCallback {
                 override fun onLongPressEvent(
@@ -348,6 +351,8 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
                 switch1.visibility = View.VISIBLE
                 timelayout.visibility = View.VISIBLE
+                btnAR.visibility = View.VISIBLE
+                toolbar.setTitle("주변을 조심하세요!")
 
 
                 val currentLocation = gpsManager.currentLocation
@@ -373,13 +378,13 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                                     Log.d("totaltime","${ParseJson.totalTime}")
 
                                     val now = System.currentTimeMillis()
-                                    Log.d("now", "${now}")
+                                    //Log.d("now", "${now}")
                                     val expectedtime : Long = now + (ParseJson.totalTime!!.toLong()*1000L)
-                                    Log.d("et", "${expectedtime}")
+                                    //Log.d("et", "${expectedtime}")
                                     val date1 =Date(expectedtime)
-                                    val sdfNow = SimpleDateFormat("yyyy/MM/dd HH:mm:ss")
+                                    val sdfNow = SimpleDateFormat("HH:MM")
                                     val formatDate = sdfNow.format(date1)
-                                    totaltime.text = formatDate
+                                    totaltime.text = "${formatDate} 도착예정"
 
 
                                     runOnUiThread(object : Runnable {
@@ -619,6 +624,8 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                         setDestination(mapPoint)
                         mapView.setCenterPoint(longitude, latitude)
                         appendToHistoryFile(name!!, latitude, longitude)
+                        Log.d("시발", "여기오냐")
+
                     }
 
 
@@ -671,6 +678,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
             val bw = BufferedWriter(FileWriter(File(filesDir, "history.txt"), true))
             bw.append(String.format("%s %f %f", name, longitude, latitude))
             bw.newLine()
+            Log.d("버퍼", "${bw}")
             bw.close()
         } catch (e : Exception){
             Log.d("FileWirteException", e.message)
@@ -680,6 +688,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
     ///////////////////////////////////////////////////////////////////////////////////////////
     val locationListener = object : LocationListener{
         override fun onLocationChanged(location: Location?) {
+
             try {
                 if(location != null) {
                     val distanceFromPrev: Float = location.distanceTo(gpsManager.getLastLocation())
@@ -688,28 +697,29 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                         gpsManager.setLastLocation(location)
 
                         mapView.setLocationPoint(location.longitude , location.latitude)
+                        //mapView.setCenterPoint(location.longitude, location.latitude)
                         if(navigationMode){
                             moveToCurrentLocation()
                             //updateDirection()
                         }
                     }
                 }
+
+                Log.d("테스트", location.toString())
+
             } catch (e : Exception){ }
         }
 
         override fun onProviderDisabled(provider: String?) {
-            // TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-            Log.d("Exception1 : ", provider)
+            Log.d("Provider변경", provider)
         }
 
         override fun onProviderEnabled(provider: String?) {
-            // TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-            Log.d("Exception2 : ", provider)
+            Log.d("Provider변경", provider)
         }
 
         override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-            // TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-            Log.d("Exception3 : ", provider)
+            Log.d("Provider변경", provider)
         }
     }
 
@@ -737,6 +747,10 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
             }else {
                 mapView.setCompassMode(false)
             }
+
         }
     }
+
+
+
 }

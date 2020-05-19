@@ -29,18 +29,24 @@ class HistoryActivity : AppCompatActivity() {
         arrayPOI = ArrayList<SearchActivity.Companion.POI>()
         adapter = SearchListAdapter()
 
+        lvHistory.adapter = adapter
+
         btnErase.setOnClickListener {
             try {
+
                 val file = File(filesDir , "history.txt")
                 if(file.exists()){
                     file.delete()
                 }
+                adapter.clear()
+                adapter.notifyDataSetChanged()
+
+
             } catch (e : Exception){
                 Log.d("Erase", e.message)
             }
         }
 
-        lvHistory.adapter = adapter
 
         try {
             val file = File(filesDir , "history.txt")
@@ -48,20 +54,45 @@ class HistoryActivity : AppCompatActivity() {
 
             var line : String? = null
 
-            while (br.readLine().also { line = it } != null) {
-                val vals = line!!.split(" ").toTypedArray()
-                val name = vals[0]
-                val longitude = java.lang.Double.valueOf(vals[1])
-                val latitude = java.lang.Double.valueOf(vals[2])
-                val poi = SearchActivity.Companion.POI()
-                poi.name = name
-                poi.longitute = longitude
-                poi.latitude = latitude
-                arrayPOI.add(poi)
-                adapter.addItem(name, "위도:$longitude/경도:$latitude")
-            }
+            do {
+                line = br.readLine()
+                if(line == null)
+                    break
+                val vals : List<String> = line.split(" ")
+                Log.d("뭐야", "${vals}")
 
-            adapter.notifyDataSetChanged()
+                when(vals.size){
+                    3 -> {
+                        val name = vals[0]
+                        val longitude = java.lang.Double.valueOf(vals[1])
+                        val latitude = java.lang.Double.valueOf(vals[2])
+                        val poi = SearchActivity.Companion.POI()
+                        poi.name = name
+                        poi.longitute = longitude
+                        poi.latitude = latitude
+                        arrayPOI.add(poi)
+                        adapter.addItem(name, "위도:$longitude/경도:$latitude")
+                        adapter.notifyDataSetChanged()
+                    }
+
+                    4-> {
+                        val name = vals[0] + vals[1]
+                        val longitude = java.lang.Double.valueOf(vals[2])
+                        val latitude = java.lang.Double.valueOf(vals[3])
+                        val poi = SearchActivity.Companion.POI()
+                        poi.name = name
+                        poi.longitute = longitude
+                        poi.latitude = latitude
+                        arrayPOI.add(poi)
+                        adapter.addItem(name, "위도:$longitude/경도:$latitude")
+                        adapter.notifyDataSetChanged()
+                    }
+                }
+
+
+            } while ( line != null)
+
+            //adapter.notifyDataSetChanged()
             br.close()
         } catch (e: Exception){
 

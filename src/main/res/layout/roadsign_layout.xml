@@ -10,10 +10,9 @@
 
     <TextView
         android:id="@+id/textView"
-        android:layout_width="130dp"
-        android:layout_height="130dp"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
         android:gravity="center"
         android:textColor="#fff"
-
-        android:textSize="60sp" />
+        android:textSize="50sp" />
 </LinearLayout>

@@ -270,7 +270,7 @@ public class ARActivity extends AppCompatActivity {
                             prevLocationMarker = layoutLocationMarker;
 
                             layoutLocationMarker.setScalingMode(LocationMarker.ScalingMode.SIMPLE_SCALING);
-                            layoutLocationMarker.setGradualScalingMaxScale(6F);
+                            layoutLocationMarker.setGradualScalingMaxScale(4F);
                             layoutLocationMarker.setGradualScalingMinScale(1F);
                             layoutLocationMarker.setOnlyRenderWhenWithin(400);
 
@@ -309,7 +309,7 @@ public class ARActivity extends AppCompatActivity {
                                     else if (angle <= -30)
                                         arrow = "←";
                                     else
-                                        arrow = "";
+                                        arrow = "↑";
                                     roadsignTextView.setText(indexString + '\n' +  arrow);
                                 }
                             });
@@ -325,8 +325,6 @@ public class ARActivity extends AppCompatActivity {
                         locationMarker.setGradualScalingMinScale(1F);
                         prevLocationMarker.setLookNode(node);
                         prevLocationMarker = locationMarker;
-
-                        Log.d(TAG, "kmyLog, marker scaling mode : " + locationMarker.getScalingMode() + ", marker max scale : " + locationMarker.getGradualScalingMaxScale());
                         LocationScene.mLocationMarkers.add(locationMarker);
                     }
 

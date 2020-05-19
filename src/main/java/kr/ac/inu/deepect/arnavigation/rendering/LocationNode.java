@@ -30,6 +30,7 @@ public class LocationNode extends AnchorNode {
     private float height = 0F;
     private float gradualScalingMinScale = 0.8F;
     private float gradualScalingMaxScale = 1.4F;
+    private double scale;
 
     private LocationMarker.ScalingMode scalingMode = LocationMarker.ScalingMode.NO_SCALING; // !
     private LocationScene locationScene;
@@ -39,6 +40,8 @@ public class LocationNode extends AnchorNode {
         this.locationMarker = locationMarker;
         this.locationScene = locationScene;
     }
+
+    public double getScale() { return scale; }
 
     public float getHeight() {
         return height;
@@ -230,10 +233,10 @@ public class LocationNode extends AnchorNode {
                     scale = ((1.0F / markerDistance) * 150);
                     if (scale > gradualScalingMaxScale)
                         scale = gradualScalingMaxScale;
+
                     else if (scale < gradualScalingMinScale)
                         scale = gradualScalingMinScale;
-                    else
-                        break;
+                    this.scale = scale;
             }
 
             scale *= scaleModifier;
