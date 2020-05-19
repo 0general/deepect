@@ -89,6 +89,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
         setContentView(R.layout.activity_main)
         mapView = TMapView(this)
+        Toast.makeText(this, "실제 위치와 50M 정도 차이날 수 있습니다", Toast.LENGTH_SHORT).show()
 
         try {
             //gps = TMapGpsManager(this)
@@ -109,10 +110,10 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                 startActivity(intent)
             }
 
-            /*connectserver.setOnClickListener {
+            connectserver.setOnClickListener {
                 val connetion = ConnectServer()
                 connetion.start()
-            }*/
+            }
 
             moveToCurrentLocation()
         } catch (e: Exception){
@@ -696,7 +697,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                         gpsManager.setLastLocation(location)
 
                         mapView.setLocationPoint(location.longitude , location.latitude)
-                        mapView.setCenterPoint(location.longitude, location.latitude)
+                        //mapView.setCenterPoint(location.longitude, location.latitude)
                         if(navigationMode){
                             moveToCurrentLocation()
                             //updateDirection()

@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.os.StrictMode
 import android.util.Base64
 import android.util.Log
+import com.google.flatbuffers.Utf8
 import java.io.*
 import java.net.Socket
 import java.net.UnknownHostException
@@ -21,8 +22,8 @@ class ConnectServer : Thread() {
     private lateinit var socketOut : PrintWriter
     private lateinit var dis : DataInputStream
     private lateinit var dos : DataOutputStream
-    private val port = 8000
-    private val ip = "3.12.250.104"
+    private val port = 12000
+    private val ip = "192.168.0.28"
     private lateinit var mHandler: SocketHandler
     private lateinit var mThread: Thread
 
@@ -64,10 +65,20 @@ class ConnectServer : Thread() {
         return encodedstr
     }*/
 
+    fun getFileSize(){
+        var size = ""
+        var filesize : Long = 0
+        val file = File("/mnt/sdcard/DCIM/Camera/20180729_194225_HDR.jpg")
+        if(file.exists()){
+            filesize = file.length()
+        }
+        Log.d("filesize", "${filesize}")
+    }
 
     override fun run() {
         val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
         StrictMode.setThreadPolicy(policy)
+        getFileSize()
 
         try { // 소켓을 생성하고 입출력 스트립을 소켓에 연결
             clientSocket = Socket(ip , port)
@@ -78,8 +89,9 @@ class ConnectServer : Thread() {
 
                 //socketIn = BufferedReader(InputStreamReader(clientSocket.getInputStream(), "UTF-8"))
                 socketOut = PrintWriter(BufferedWriter(OutputStreamWriter(clientSocket.getOutputStream())),true)
-                dis = DataInputStream(FileInputStream(File("/mnt/sdcard/DCIM/Camera/20180729_194225_HDR.jpg/")))
+                dis = DataInputStream(FileInputStream(File("/mnt/sdcard/DCIM/Camera/20180729_194225_HDR.jpg")))
                 dos = DataOutputStream(clientSocket.getOutputStream())
+
                 val buf = ByteArray(1024)
 
                 while (dis.read(buf) > 0) {
