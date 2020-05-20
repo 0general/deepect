@@ -11,4 +11,73 @@
         android:layout_height="fill_parent"
         android:layout_gravity="top"/>
 
+    <TextView
+        android:id="@+id/descView"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@drawable/button_design"
+        android:layout_marginStart="50dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="85dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="50dp"
+        android:layout_alignBottom="@id/ar_scene_view"
+        android:gravity="center"
+        android:textSize="16sp"
+        android:textColor="#000000"/>
+
+    <TextView
+        android:id="@+id/descIndexView"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:background="@drawable/roadsign_layout_desc_style"
+        android:layout_marginStart="12dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="50dp"
+        android:gravity="center"
+        android:textSize="30dp"
+        android:textColor="#FFFFFF"
+        android:layout_alignBottom="@id/ar_scene_view" />
+
+    <Button
+        android:id="@+id/btnNext"
+        android:layout_width="30dp"
+        android:layout_height="50dp"
+        android:background="@drawable/button_design"
+        android:text="@string/description_next"
+        android:textSize="35sp"
+        android:textColor="#000000"
+        android:gravity="center"
+        android:layout_marginStart="4dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="50dp"
+        android:layout_alignBottom="@id/ar_scene_view"
+        android:layout_alignRight="@id/ar_scene_view"
+        />
+    
+    <Button
+        android:id="@+id/btnPrevious"
+        android:layout_width="30dp"
+        android:layout_height="50dp"
+        android:background="@drawable/button_design"
+        android:text="@string/description_previous"
+        android:textSize="35sp"
+        android:textColor="#000000"
+        android:gravity="center"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="50dp"
+        android:layout_alignBottom="@id/ar_scene_view"
+        android:layout_toLeftOf="@id/btnNext" />
+        
+
 </RelativeLayout>

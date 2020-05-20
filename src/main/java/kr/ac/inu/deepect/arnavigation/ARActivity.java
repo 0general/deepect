@@ -2,17 +2,17 @@ package kr.ac.inu.deepect.arnavigation;
 
 import android.content.Context;
 import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
 import com.google.ar.core.Config;
 import com.google.ar.core.Frame;
@@ -61,13 +61,15 @@ public class ARActivity extends AppCompatActivity {
         destination = dest;
     }
 
-    private static class LatLon {
+    private static class LatLonDesc {
         private double latitude;
         private double longitude;
+        private String description;
 
-        LatLon(double latitude, double longitude) {
+        LatLonDesc(double latitude, double longitude, String description) {
             this.latitude = latitude;
             this.longitude = longitude;
+            this.description = description;
         }
 
         public void setLatitude(double latitude) {
@@ -85,21 +87,35 @@ public class ARActivity extends AppCompatActivity {
         public double getLongitude() {
             return longitude;
         }
+
+        public String getDescription() {
+            return description;
+        }
     }
 
-    private static List<LatLon> middleNodes = null;
+    private static List<LatLonDesc> middleNodes = null;
+
+    private static List<String> descriptions = null;
+
+    private int descIndex = 0;
 
     public static void clearMiddleNodes() {
         if (middleNodes != null) {
             middleNodes = null;
         }
-        middleNodes = new ArrayList<LatLon>();
+        middleNodes = new ArrayList<LatLonDesc>();
     }
 
-    public static void setMiddleNodes(@NotNull double lat, double lon) {
-        LatLon node = new LatLon(lat, lon);
-
+    public static void setMiddleNodes(@NotNull double lat, double lon, String desc) {
+        LatLonDesc node = new LatLonDesc(lat, lon, desc);
         middleNodes.add(node);
+    }
+
+    public void clearDescriptions() {
+        if (descriptions != null) {
+            descriptions = null;
+        }
+        descriptions = new ArrayList<String>();
     }
 
     public GpsManager gpsMan;
@@ -125,8 +141,54 @@ public class ARActivity extends AppCompatActivity {
         setContentView(R.layout.ar_main);
         arSceneView = findViewById(R.id.ar_scene_view);
         ViewRenderable roadsignLayoutRenderables[] = new ViewRenderable[middleNodes.size()];
+        clearDescriptions();
+        Toast.makeText(this, "거리가 멀어 보이지 않는 지표가 있을 수 있습니다.", Toast.LENGTH_LONG).show();
 
-        // Build a renderable from a 2D View.
+        for (int i = 0; i < middleNodes.size(); i++) {
+            String desc = middleNodes.get(i).getDescription();
+            desc = desc.replace(" 을 ", "를(을) ");
+            descriptions.add(desc);
+            Log.d(TAG, "kmyLog, desc : " + i + ", " + desc);
+        }
+
+        TextView descView = findViewById(R.id.descView);
+        TextView descIndexView = findViewById(R.id.descIndexView);
+
+        descIndexView.setText(String.valueOf(descIndex + 1));
+        descView.setText(descriptions.get(descIndex));
+
+        Button btnNext = findViewById(R.id.btnNext);
+        btnNext.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+                if (descIndex == descriptions.size() - 1) {
+                    Toast.makeText(ARActivity.this, "마지막 지표입니다.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                else {
+                    descIndex++;
+                    descIndexView.setText(String.valueOf(descIndex + 1));
+                    descView.setText(descriptions.get(descIndex));
+                }
+            }
+        });
+
+        Button btnPrevious = findViewById(R.id.btnPrevious);
+        btnPrevious.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+                if (descIndex == 0) {
+                    Toast.makeText(ARActivity.this, "첫번째 지표입니다.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                else {
+                    descIndex--;
+                    descIndexView.setText(String.valueOf(descIndex + 1));
+                    descView.setText(descriptions.get(descIndex));
+                }
+            }
+        });
+
+
+                // Build a renderable from a 2D View.
         // sceneform의 모든 build() 메소드는 CompleableFuture를 반환한다
 //        CompletableFuture<ViewRenderable> exampleLayout = // "미래에 처리할 업무(Task)로서,  Task 결과가 완료되었을때 값을 리턴하거나, 다른 Task가 실행되도록 발화(trigger)시키는 Task."
 //                ViewRenderable.builder()
@@ -258,7 +320,8 @@ public class ARActivity extends AppCompatActivity {
 //                        LocationScene.mLocationMarkers.add(locationMarker);
                         for (int i = 0; i < middleNodes.size(); i++) {
                             final int finalI = i;
-                            LatLon point = middleNodes.get(i);
+                            LatLonDesc point = middleNodes.get(i);
+
                             Node node = getExampleView(roadsignLayoutRenderables[i]);
                             LocationMarker layoutLocationMarker = createLocationMarker(
                                     point.getLatitude(), point.getLongitude(), node);
@@ -280,8 +343,6 @@ public class ARActivity extends AppCompatActivity {
                                     ViewRenderable roadsignLayoutRendarable = roadsignLayoutRenderables[finalI];
                                     // Log.d(TAG, "kmyLog, in render nodeId : " + node);
                                     double angle = node.getAngle(layoutLocationMarker.cameraNode, layoutLocationMarker.node, layoutLocationMarker.nodeToLook);
-                                    Log.d(TAG, "kmyLog, scale :" + finalI + ", " + node.getScale());
-
                                     View eView = roadsignLayoutRendarable.getView();
                                     TextView roadsignTextView = eView.findViewById(R.id.textView);
                                     roadsignTextView.setTypeface(null, Typeface.BOLD);
@@ -468,6 +529,8 @@ public class ARActivity extends AppCompatActivity {
         }
     }
 
+};
+
 //    public static double distFrom(double nowLat, double nowLon, double destLat, double destLon) {
 //        double earthRadius = 6371000; //meters
 //        double dLat = Math.toRadians(destLat-nowLat);
@@ -481,4 +544,3 @@ public class ARActivity extends AppCompatActivity {
 //        Log.i(TAG, "kmyLog, Distance = " + String.valueOf(dist));
 //        return dist;
 //    }
-}

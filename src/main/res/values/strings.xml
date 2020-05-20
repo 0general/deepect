@@ -2,6 +2,10 @@
     // ARCore
     <string name="app_name">ARNavigation</string>
     <string name="plane_finding">Searching for surfaces&#8230;</string>
+    <string name="description"/>
+    <string name="description_next">&gt;</string>
+    <string name="description_previous">&lt;</string>
+
 
     // Navigation
     <string name="navigation_drawer_open">Open navigation drawer</string>
