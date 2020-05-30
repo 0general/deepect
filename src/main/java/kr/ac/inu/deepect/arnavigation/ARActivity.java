@@ -1,19 +1,31 @@
 package kr.ac.inu.deepect.arnavigation;
 
 import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Typeface;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.PixelCopy;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.google.ar.core.Config;
 import com.google.ar.core.Frame;
 import com.google.ar.core.Session;
@@ -24,11 +36,21 @@ import com.google.ar.sceneform.ArSceneView;
 import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.rendering.ViewRenderable;
+import com.google.ar.sceneform.ux.ArFragment;
+import com.google.ar.sceneform.ux.BaseArFragment;
 import com.skt.Tmap.TMapPoint;
 
 import org.jetbrains.annotations.NotNull;
+import org.w3c.dom.Text;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -42,6 +64,10 @@ import kr.ac.inu.deepect.arnavigation.utils.ARLocationPermissionHelper;
 public class ARActivity extends AppCompatActivity {
     private boolean installRequested;
     private boolean hasFinishedLoading[] = { false, false };
+
+    private RelativeLayout container;
+
+    private ArFragment fragment;
 
     private ArSceneView arSceneView;
 
@@ -120,6 +146,8 @@ public class ARActivity extends AppCompatActivity {
 
     public GpsManager gpsMan;
 
+    private boolean doesBlink = true;
+
     /*
     private LatLon points[] = {
             new LatLon(37.488760, 126.704996),
@@ -133,14 +161,99 @@ public class ARActivity extends AppCompatActivity {
     };
     */
 
+    private String generateFilename() {
+        String date =
+                new SimpleDateFormat("yyyyMMddHHmmss", java.util.Locale.getDefault()).format(new Date());
+        return Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_PICTURES) + File.separator + "Sceneform/" + date + "_screenshot.jpg";
+    }
+
+    private void saveBitmapToDisk(Bitmap bitmap, String filename) throws IOException {
+
+        File out = new File(filename);
+        if (!out.getParentFile().exists()) {
+            out.getParentFile().mkdirs();
+        }
+        try (FileOutputStream outputStream = new FileOutputStream(filename);
+             ByteArrayOutputStream outputData = new ByteArrayOutputStream()) {
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputData);
+            outputData.writeTo(outputStream);
+            outputStream.flush();
+            outputStream.close();
+        } catch (IOException ex) {
+            throw new IOException("Failed to save bitmap to disk", ex);
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    private void takePhoto() {
+        Toast.makeText(this, "사진 처리 중입니다. 잠시만 기다려주세요.", Toast.LENGTH_LONG).show();
+        final String filename = generateFilename();
+        ArSceneView view = arSceneView;
+
+        // Create a bitmap the size of the scene view.
+        final Bitmap bitmap = Bitmap.createBitmap(view.getWidth(), view.getHeight(),
+                Bitmap.Config.ARGB_8888);
+
+        // Create a handler thread to offload the processing of the image.
+        final HandlerThread handlerThread = new HandlerThread("PixelCopier");
+        handlerThread.start();
+        // Make the request to copy.
+        PixelCopy.request(view, bitmap, (copyResult) -> {
+            if (copyResult == PixelCopy.SUCCESS) {
+                try {
+                    saveBitmapToDisk(bitmap, filename);
+                } catch (IOException e) {
+                    Toast toast = Toast.makeText(ARActivity.this, e.toString(),
+                            Toast.LENGTH_LONG);
+                    toast.show();
+                    return;
+                }
+////                Snackbar snackbar = Snackbar.make(findViewById(android.R.id.content),
+////                        "성공적으로 캡쳐되었습니다.", Snackbar.LENGTH_LONG);
+////                snackbar.setAction("사진 보기", v -> {
+////                    File photoFile = new File(filename);
+////
+////                    Uri photoURI = FileProvider.getUriForFile(ARActivity.this,
+////                            ARActivity.this.getPackageName() + ".ar.codelab.name.provider",
+////                            photoFile);
+////                    Intent intent = new Intent(Intent.ACTION_VIEW, photoURI);
+////                    intent.setDataAndType(photoURI, "image/*");
+////                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+////                    startActivity(intent);
+//                });
+//                snackbar.show();
+
+                File photoFile = new File(filename);
+
+                Uri photoURI = FileProvider.getUriForFile(ARActivity.this,
+                            ARActivity.this.getPackageName() + ".ar.codelab.name.provider",
+                            photoFile);
+                Intent intent = new Intent(Intent.ACTION_VIEW, photoURI);
+                intent.setDataAndType(photoURI, "image/*");
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                startActivity(intent);
+            } else {
+                Toast toast = Toast.makeText(ARActivity.this,
+                        "Failed to copyPixels: " + copyResult, Toast.LENGTH_LONG);
+                toast.show();
+            }
+            handlerThread.quitSafely();
+        }, new Handler(handlerThread.getLooper()));
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     @SuppressWarnings({"AndroidApiChecker", "FutureReturnValueIgnored"})
     // CompletableFuture requires api level 24
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.ar_main);
+        container = (RelativeLayout)findViewById(R.id.ar_container);
+//        fragment = (ArFragment)
+//                getSupportFragmentManager().findFragmentById(R.id.sceneform_fragment);
         arSceneView = findViewById(R.id.ar_scene_view);
-        ViewRenderable roadsignLayoutRenderables[] = new ViewRenderable[middleNodes.size()];
+        ViewRenderable roadsignLayoutRenderables[] = new ViewRenderable[middleNodes.size()-1];
         clearDescriptions();
         Toast.makeText(this, "거리가 멀어 보이지 않는 지표가 있을 수 있습니다.", Toast.LENGTH_LONG).show();
 
@@ -153,6 +266,8 @@ public class ARActivity extends AppCompatActivity {
 
         TextView descView = findViewById(R.id.descView);
         TextView descIndexView = findViewById(R.id.descIndexView);
+        TextView correctionView = findViewById(R.id.correctionView);
+        correctionView.setVisibility(View.INVISIBLE);
 
         descIndexView.setText(String.valueOf(descIndex + 1));
         descView.setText(descriptions.get(descIndex));
@@ -163,6 +278,11 @@ public class ARActivity extends AppCompatActivity {
                 if (descIndex == descriptions.size() - 1) {
                     Toast.makeText(ARActivity.this, "마지막 지표입니다.", Toast.LENGTH_SHORT).show();
                     return;
+                }
+                else if (descIndex == descriptions.size()-2) {
+                    descIndex++;
+                    descIndexView.setVisibility(View.INVISIBLE);
+                    descView.setText(descriptions.get(descIndex));
                 }
                 else {
                     descIndex++;
@@ -179,6 +299,12 @@ public class ARActivity extends AppCompatActivity {
                     Toast.makeText(ARActivity.this, "첫번째 지표입니다.", Toast.LENGTH_SHORT).show();
                     return;
                 }
+                else if (descIndex == descriptions.size()-1) {
+                    descIndexView.setVisibility(View.VISIBLE);
+                    descIndex--;
+                    descIndexView.setText(String.valueOf(descIndex + 1));
+                    descView.setText(descriptions.get(descIndex));
+                }
                 else {
                     descIndex--;
                     descIndexView.setText(String.valueOf(descIndex + 1));
@@ -187,6 +313,41 @@ public class ARActivity extends AppCompatActivity {
             }
         });
 
+        Button btnCapture = findViewById(R.id.btnCapture);
+        btnCapture.setVisibility(View.INVISIBLE);
+        btnCapture.setOnClickListener(view -> takePhoto());
+
+        Button btnReturn = findViewById(R.id.btnReturn);
+        btnReturn.setVisibility(View.INVISIBLE);
+
+        Button btnCorrection = findViewById(R.id.btnCorrection);
+        btnCorrection.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+                doesBlink = false;
+                descView.setVisibility(View.INVISIBLE);
+                descIndexView.setVisibility(View.INVISIBLE);
+                btnNext.setVisibility(View.INVISIBLE);
+                btnPrevious.setVisibility(View.INVISIBLE);
+                btnCorrection.setVisibility(View.INVISIBLE);
+                correctionView.setVisibility(View.VISIBLE);
+                btnReturn.setVisibility(View.VISIBLE);
+                btnCapture.setVisibility(View.VISIBLE);
+            }
+        });
+
+        btnReturn.setOnClickListener(new Button.OnClickListener() {
+            public void onClick(View v) {
+                doesBlink = true;
+                descView.setVisibility(View.VISIBLE);
+                descIndexView.setVisibility(View.VISIBLE);
+                btnNext.setVisibility(View.VISIBLE);
+                btnPrevious.setVisibility(View.VISIBLE);
+                btnCorrection.setVisibility(View.VISIBLE);
+                correctionView.setVisibility(View.INVISIBLE);
+                btnReturn.setVisibility(View.INVISIBLE);
+                btnCapture.setVisibility(View.INVISIBLE);
+            }
+        });
 
                 // Build a renderable from a 2D View.
         // sceneform의 모든 build() 메소드는 CompleableFuture를 반환한다
@@ -197,7 +358,7 @@ public class ARActivity extends AppCompatActivity {
 
         // When you build a Renderable, Sceneform loads its resources in the background while returning
         // a CompletableFuture. Call thenAccept(), handle(), or check isDone() before calling get().
-        CompletableFuture<ViewRenderable> exampleFutures[] = new CompletableFuture[middleNodes.size()];
+        CompletableFuture<ViewRenderable> exampleFutures[] = new CompletableFuture[middleNodes.size()-1];
         for (int i = 0; i < exampleFutures.length; i++) {
             exampleFutures[i] = ViewRenderable.builder()
                     .setView(this, R.layout.roadsign_layout)
@@ -318,7 +479,7 @@ public class ARActivity extends AppCompatActivity {
 //                        prevLocationMarker = locationMarker;
 //                        node.setRenderable(targetRenderable);
 //                        LocationScene.mLocationMarkers.add(locationMarker);
-                        for (int i = 0; i < middleNodes.size(); i++) {
+                        for (int i = 0; i < middleNodes.size()-1; i++) {
                             final int finalI = i;
                             LatLonDesc point = middleNodes.get(i);
 
@@ -403,6 +564,21 @@ public class ARActivity extends AppCompatActivity {
 
         // Lastly request CAMERA & fine location permission which is required by ARCore-Location.
         ARLocationPermissionHelper.requestPermission(this);
+
+//        btnCapture.setOnClickListener(new Button.OnClickListener() {
+//            public void onClick(View v) {
+//                arSceneView.buildDrawingCache();
+//                Bitmap captureView = arSceneView.getDrawingCache();
+//                FileOutputStream fos;
+//                try {
+//                    fos = new FileOutputStream(Environment.getExternalStorageDirectory().toString()+"/capture.jpeg");
+//                    captureView.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+//                } catch (FileNotFoundException e) {
+//                    e.printStackTrace();
+//                }
+//                Toast.makeText(getApplicationContext(), "캡쳐 후 서버로 전송되었습니다.", Toast.LENGTH_LONG).show();
+//            }
+//        });
     }
 
     private LocationMarker createLocationMarker(double latitude, double longitude, Node node) {
@@ -528,6 +704,36 @@ public class ARActivity extends AppCompatActivity {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
     }
+
+
+
+//    private void blink() {
+//        final Handler handler = new Handler();
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                int timeToBlink = 800;
+//                try {Thread.sleep(timeToBlink);}
+//                catch (Exception e) {}
+//                    handler.post(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            TextView correctionView = (TextView) findViewById(R.id.correctionView);
+//                            if (!doesBlink) {
+//                                if (correctionView.getVisibility() == View.VISIBLE)
+//                                    correctionView.setVisibility(View.INVISIBLE);
+//                                else
+//                                    correctionView.setVisibility(View.VISIBLE);
+//                                blink();
+//                            }
+//                            else {
+//                                correctionView.setVisibility(View.INVISIBLE);
+//                            }
+//                        }
+//                    });
+//            }
+//        }).start();
+//    }
 
 };
 
