@@ -44,7 +44,7 @@ class ParseJson {
                             name = description
                             description = ""
                         }
-                        setMiddleNodes(coord.getDouble(1), coord.getDouble(0), name)
+                        setMiddleNodes(coord.getDouble(1), coord.getDouble(0), description)
 
                         //popupListItems.add(PopupListItem(name, description, false, points))
                     } else if (type.equals("LineString")) {

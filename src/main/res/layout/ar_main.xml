@@ -8,13 +8,7 @@
     android:id="@+id/ar_container"
     >
 
-    <com.google.ar.sceneform.ArSceneView
-        android:id="@+id/ar_scene_view"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_gravity="top"/>
-
-<!--    <fragment-->
+    <!--    <fragment-->
 <!--        android:id="@+id/sceneform_fragment"-->
 <!--        android:name="kr.ac.inu.deepect.arnavigation.WritingArFragment"-->
 <!--        android:layout_width="match_parent"-->
@@ -23,6 +17,14 @@
 <!--        app:layout_constraintBottom_toTopOf="@id/ar_scene_view"-->
 <!--        app:layout_constraintVertical_chainStyle="spread"-->
 <!--        app:layout_constraintVertical_weight="9" />-->
+
+    <com.google.ar.sceneform.ArSceneView
+        android:id="@+id/ar_scene_view"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_gravity="top" />
 
     <TextView
         android:id="@+id/descView"
@@ -37,7 +39,9 @@
         android:layout_marginBottom="50dp"
         android:layout_alignBottom="@id/ar_scene_view"
         android:gravity="center"
-        android:textSize="16sp"
+        android:paddingLeft="15dp"
+        android:paddingRight="10dp"
+        android:textSize="14sp"
         android:textColor="#000000"/>
 
     <TextView
@@ -86,7 +90,7 @@
         android:gravity="center"
         android:layout_marginStart="4dp"
         android:layout_marginLeft="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="100px"
         android:layout_marginEnd="16dp"
         android:layout_marginRight="16dp"
         android:layout_marginBottom="50dp"
@@ -105,7 +109,7 @@
         android:gravity="center"
         android:layout_marginStart="4dp"
         android:layout_marginLeft="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="100px"
         android:layout_marginEnd="16dp"
         android:layout_marginRight="16dp"
         android:layout_marginBottom="50dp"
@@ -122,15 +126,14 @@
         android:textSize="14sp"
         android:textColor="#000000"
         android:gravity="center"
-        android:layout_marginStart="350px"
-        android:layout_marginLeft="140px"
-        android:layout_marginTop="1250px"
-        android:layout_marginEnd="350px"
-        android:layout_marginRight="140px"
-        android:layout_marginBottom="710px"
-        android:layout_alignTop="@id/ar_scene_view"
-        android:layout_alignRight="@id/ar_scene_view"
-        android:layout_alignLeft="@id/ar_scene_view"
+        android:layout_marginStart="80dp"
+        android:layout_marginLeft="30dp"
+        android:layout_marginTop="220dp"
+        android:layout_marginEnd="80dp"
+        android:layout_marginRight="16dp"
+        android:layout_alignTop="@id/correctionView"
+        android:layout_alignEnd="@id/correctionView"
+        android:layout_alignStart="@id/correctionView"
         />
 
     <Button

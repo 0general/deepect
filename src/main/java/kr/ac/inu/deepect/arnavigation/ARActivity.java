@@ -3,6 +3,7 @@ package kr.ac.inu.deepect.arnavigation;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Point;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Build;
@@ -11,6 +12,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
+import android.view.Display;
 import android.view.MotionEvent;
 import android.view.PixelCopy;
 import android.view.View;
@@ -56,6 +58,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import kr.ac.inu.deepect.R;
+import kr.ac.inu.deepect.arnavigation.navigation.ConnectServer;
 import kr.ac.inu.deepect.arnavigation.navigation.GpsManager;
 import kr.ac.inu.deepect.arnavigation.rendering.LocationNode;
 import kr.ac.inu.deepect.arnavigation.rendering.LocationNodeRender;
@@ -133,8 +136,10 @@ public class ARActivity extends AppCompatActivity {
     }
 
     public static void setMiddleNodes(@NotNull double lat, double lon, String desc) {
-        LatLonDesc node = new LatLonDesc(lat, lon, desc);
-        middleNodes.add(node);
+        if (desc != "") {
+            LatLonDesc node = new LatLonDesc(lat, lon, desc);
+            middleNodes.add(node);
+        }
     }
 
     public void clearDescriptions() {
@@ -169,14 +174,13 @@ public class ARActivity extends AppCompatActivity {
     }
 
     private void saveBitmapToDisk(Bitmap bitmap, String filename) throws IOException {
-
         File out = new File(filename);
         if (!out.getParentFile().exists()) {
             out.getParentFile().mkdirs();
         }
         try (FileOutputStream outputStream = new FileOutputStream(filename);
              ByteArrayOutputStream outputData = new ByteArrayOutputStream()) {
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputData);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputData);
             outputData.writeTo(outputStream);
             outputStream.flush();
             outputStream.close();
@@ -187,13 +191,12 @@ public class ARActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void takePhoto() {
-        Toast.makeText(this, "사진 처리 중입니다. 잠시만 기다려주세요.", Toast.LENGTH_LONG).show();
         final String filename = generateFilename();
         ArSceneView view = arSceneView;
 
         // Create a bitmap the size of the scene view.
         final Bitmap bitmap = Bitmap.createBitmap(view.getWidth(), view.getHeight(),
-                Bitmap.Config.ARGB_8888);
+                Bitmap.Config.RGB_565);
 
         // Create a handler thread to offload the processing of the image.
         final HandlerThread handlerThread = new HandlerThread("PixelCopier");
@@ -229,10 +232,19 @@ public class ARActivity extends AppCompatActivity {
                 Uri photoURI = FileProvider.getUriForFile(ARActivity.this,
                             ARActivity.this.getPackageName() + ".ar.codelab.name.provider",
                             photoFile);
-                Intent intent = new Intent(Intent.ACTION_VIEW, photoURI);
-                intent.setDataAndType(photoURI, "image/*");
-                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                startActivity(intent);
+                ConnectServer connectServer = new ConnectServer(photoFile);
+                connectServer.start();
+                Toast.makeText(this, "캡쳐되었습니다.", Toast.LENGTH_SHORT);
+//                Intent intent = new Intent(Intent.ACTION_VIEW, photoURI);
+//                intent.setDataAndType(photoURI, "image/*");
+//                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+//                startActivity(intent);
+
+                if (photoFile.delete()) {
+                    Log.d(TAG, "kmyLog, 삭제 성공");
+                } else {
+                    Log.d(TAG, "kmyLog, 삭제 실패");
+                }
             } else {
                 Toast toast = Toast.makeText(ARActivity.this,
                         "Failed to copyPixels: " + copyResult, Toast.LENGTH_LONG);
@@ -252,6 +264,12 @@ public class ARActivity extends AppCompatActivity {
         container = (RelativeLayout)findViewById(R.id.ar_container);
 //        fragment = (ArFragment)
 //                getSupportFragmentManager().findFragmentById(R.id.sceneform_fragment);
+
+        Display display = getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        Log.d(TAG, "kmyLog, size : " + size);
+
         arSceneView = findViewById(R.id.ar_scene_view);
         ViewRenderable roadsignLayoutRenderables[] = new ViewRenderable[middleNodes.size()-1];
         clearDescriptions();
