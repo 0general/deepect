@@ -110,10 +110,10 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                 startActivity(intent)
             }
 
-            connectserver.setOnClickListener {
-                val connetion = ConnectServer()
-                connetion.start()
-            }
+//            connectserver.setOnClickListener {
+//                val connetion = ConnectServer()
+//                connetion.start()
+//            }
 
             moveToCurrentLocation()
         } catch (e: Exception){

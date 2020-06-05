@@ -18,6 +18,8 @@ public class LocationMarker {
     // Location in AR terms
     public LocationNode anchorNode;
 
+    public Node cameraNode;
+
     // Node to render
     public Node node;
 
@@ -28,7 +30,7 @@ public class LocationMarker {
     private float scaleModifier = 1F;
     private float height = 0F;
     private int onlyRenderWhenWithin = Integer.MAX_VALUE;
-    private ScalingMode scalingMode = ScalingMode.FIXED_SIZE_ON_SCREEN;
+    private ScalingMode scalingMode = ScalingMode.NO_SCALING;
     private float gradualScalingMinScale = 0.8F;
     private float gradualScalingMaxScale = 1.4F;
     private boolean isAtCameraPosition = false;
@@ -44,8 +46,12 @@ public class LocationMarker {
 
     public void lookCamera(boolean b) { directionMode = DirectionMode.LOOK_CAMERA; }
 
+    public void setCameraNode(Node node) {
+        cameraNode = node;
+    }
+
     public void setLookNode(Node node) {
-        directionMode = DirectionMode.LOOK_NODE;
+        // directionMode = DirectionMode.LOOK_NODE;
         nodeToLook = node;
     }
 
@@ -161,7 +167,8 @@ public class LocationMarker {
         FIXED_SIZE_ON_SCREEN,
         NO_SCALING,
         GRADUAL_TO_MAX_RENDER_DISTANCE,
-        GRADUAL_FIXED_SIZE
+        GRADUAL_FIXED_SIZE,
+        SIMPLE_SCALING
     }
 
     public enum DirectionMode {

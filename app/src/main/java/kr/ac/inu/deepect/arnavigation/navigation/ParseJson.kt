@@ -4,6 +4,7 @@ package kr.ac.inu.deepect.arnavigation.navigation
 import android.util.Log
 import com.skt.Tmap.TMapPoint
 import com.skt.Tmap.TMapPolyLine
+import kr.ac.inu.deepect.arnavigation.ARActivity.clearMiddleNodes
 import kr.ac.inu.deepect.arnavigation.ARActivity.setMiddleNodes
 import org.json.JSONObject
 
@@ -20,6 +21,7 @@ class ParseJson {
                 val len:Int = features.length()
 
                 totalTime = features.getJSONObject(0).getJSONObject("properties").getInt("totalTime")
+                clearMiddleNodes();
 
                 for(i in 0 until features.length()) {
                     var obj = features.getJSONObject(i)
@@ -42,8 +44,7 @@ class ParseJson {
                             name = description
                             description = ""
                         }
-
-                        setMiddleNodes(coord.getDouble(1), coord.getDouble(0));
+                        setMiddleNodes(coord.getDouble(1), coord.getDouble(0), description)
 
                         //popupListItems.add(PopupListItem(name, description, false, points))
                     } else if (type.equals("LineString")) {
@@ -59,6 +60,7 @@ class ParseJson {
 
                         var name = props.getString("name")
                         var description = props.getString("description")
+                        //setDescriptions(description);
 
                         if(name.equals("")){
                             name = description

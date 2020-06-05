@@ -20,12 +20,12 @@
             android:id="@+id/frameMap">
 
         </FrameLayout>
-        <Button
-            android:id="@+id/connectserver"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text = "Server연결"
-            android:layout_marginTop="50dp"/>
+<!--        <Button-->
+<!--            android:id="@+id/connectserver"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text = "Server연결"-->
+<!--            android:layout_marginTop="50dp"/>-->
         <Switch
             android:id="@+id/switch1"
             android:layout_width="wrap_content"
@@ -95,7 +95,7 @@
             android:text="AR 모드"
             android:textSize="24sp"
             android:background="@drawable/button_design"
-             />
+            />
 
         <RelativeLayout
             android:id="@+id/timelayout"

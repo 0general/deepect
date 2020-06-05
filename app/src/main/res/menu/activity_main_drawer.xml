@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
 
-    <item android:title="네비게이션">
+    <item android:title="내비게이션">
         <menu>
             <item
                 android:id = "@+id/nav_search"

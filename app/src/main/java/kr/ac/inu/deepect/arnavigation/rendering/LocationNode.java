@@ -1,5 +1,7 @@
 package kr.ac.inu.deepect.arnavigation.rendering;
 
+import android.util.Log;
+
 import com.google.ar.core.Anchor;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.FrameTime;
@@ -13,6 +15,7 @@ import java.util.ArrayList;
 
 import kr.ac.inu.deepect.arnavigation.LocationMarker;
 import kr.ac.inu.deepect.arnavigation.LocationScene;
+import kr.ac.inu.deepect.arnavigation.navigation.Vector;
 import kr.ac.inu.deepect.arnavigation.utils.ARUtils;
 
 public class LocationNode extends AnchorNode {
@@ -27,6 +30,7 @@ public class LocationNode extends AnchorNode {
     private float height = 0F;
     private float gradualScalingMinScale = 0.8F;
     private float gradualScalingMaxScale = 1.4F;
+    private double scale;
 
     private LocationMarker.ScalingMode scalingMode = LocationMarker.ScalingMode.NO_SCALING; // !
     private LocationScene locationScene;
@@ -36,6 +40,8 @@ public class LocationNode extends AnchorNode {
         this.locationMarker = locationMarker;
         this.locationScene = locationScene;
     }
+
+    public double getScale() { return scale; }
 
     public float getHeight() {
         return height;
@@ -204,20 +210,33 @@ public class LocationNode extends AnchorNode {
 
             switch (scalingMode) {
                 case FIXED_SIZE_ON_SCREEN:
-                    scale = (float) Math.sqrt(directionFromCamera.x * directionFromCamera.x
-                            + directionFromCamera.y * directionFromCamera.y + directionFromCamera.z * directionFromCamera.z);
+                    scale = (float) Math.sqrt(
+                            directionFromCamera.x * directionFromCamera.x +
+                            directionFromCamera.y * directionFromCamera.y +
+                            directionFromCamera.z * directionFromCamera.z);
                     break;
                 case GRADUAL_TO_MAX_RENDER_DISTANCE:
                     float scaleDifference = gradualScalingMaxScale - gradualScalingMinScale;
-                    scale = (gradualScalingMinScale + ((locationScene.getDistanceLimit() - markerDistance) * (scaleDifference / locationScene.getDistanceLimit()))) * renderDistance;
+                    scale = (gradualScalingMinScale + ((locationScene.getDistanceLimit() - markerDistance) *
+                            (scaleDifference / locationScene.getDistanceLimit()))) * renderDistance;
                     break;
                 case GRADUAL_FIXED_SIZE:
                     scale = (float) Math.sqrt(directionFromCamera.x * directionFromCamera.x
-                            + directionFromCamera.y * directionFromCamera.y + directionFromCamera.z * directionFromCamera.z);
+                            + directionFromCamera.y * directionFromCamera.y +
+                            directionFromCamera.z * directionFromCamera.z);
                     float gradualScale = gradualScalingMaxScale - gradualScalingMinScale;
                     gradualScale = gradualScalingMaxScale - (gradualScale / renderDistance * markerDistance);
                     scale *= Math.max(gradualScale, gradualScalingMinScale);
                     break;
+                case SIMPLE_SCALING:
+                    // markerDistance, renderDistance
+                    scale = ((1.0F / markerDistance) * 150);
+                    if (scale > gradualScalingMaxScale)
+                        scale = gradualScalingMaxScale;
+
+                    else if (scale < gradualScalingMinScale)
+                        scale = gradualScalingMinScale;
+                    this.scale = scale;
             }
 
             scale *= scaleModifier;
@@ -239,6 +258,16 @@ public class LocationNode extends AnchorNode {
             }
             n.setWorldScale(new Vector3(scale, scale, scale));
         }
+    }
+
+    public double getAngle(Node now, Node n1, Node n2) {
+        Vector3 v1 = Vector3.subtract(now.getWorldPosition(), n1.getWorldPosition());
+        Vector3 v2 = Vector3.subtract(now.getWorldPosition(), n2.getWorldPosition());
+        Vector3 cross = Vector3.cross(v1, v2);
+        if (cross.y < 0)
+            return Vector3.angleBetweenVectors(v1, v2);
+        else
+            return -(Vector3.angleBetweenVectors(v1, v2));
     }
 
     public float getGradualScalingMinScale() {
