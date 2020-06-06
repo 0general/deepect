@@ -1,6 +1,7 @@
 package kr.ac.inu.deepect.arnavigation.navigation
 
 import android.app.Activity
+import android.app.Dialog
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
@@ -16,6 +17,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.CompoundButton
+import android.widget.ListView
 import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
@@ -25,6 +27,7 @@ import androidx.core.view.GravityCompat
 import com.google.android.material.navigation.NavigationView
 import com.skt.Tmap.*
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.activity_search.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import kr.ac.inu.deepect.R
@@ -74,7 +77,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
     private val REQUEST_SEARCH = 0x0001
     private val REQUEST_HISTORY = 0x0002
-
+    private val REQUEST_AROUND = 0x0003
 
 
 
@@ -110,10 +113,23 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                 startActivity(intent)
             }
 
-//            connectserver.setOnClickListener {
-//                val connetion = ConnectServer()
-//                connetion.start()
-//            }
+           connectserver.setOnClickListener {
+               val connetion = ConnectServer(File("/mnt/sdcard/DCIM/Camera/20180729_194225_HDR.jpg"), object : ConnectServer.EventListener{
+                   override fun onSocketResult(result: String) {
+                       toolbar.setTitle(result)
+                   }
+
+                   override fun onSocketFailed() {
+                       val builder = AlertDialog.Builder(this@MainActivity)
+                           .setTitle("안내")
+                           .setMessage("실패")
+                           .setPositiveButton("확인", null)
+                           .show()
+                   }
+               })
+               connetion.start()
+          }
+
 
             moveToCurrentLocation()
         } catch (e: Exception){
@@ -642,8 +658,8 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                         setDestination(mapPoint)
                         mapView.setCenterPoint(longitude, latitude)
                     }
-
                 }
+
                 else -> {
                     super.onActivityResult(requestCode, resultCode, data)
                 }
@@ -664,6 +680,10 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                 R.id.nav_history -> {
                     val intent = Intent(this, HistoryActivity::class.java)
                     startActivityForResult(intent, REQUEST_HISTORY)
+                }
+                R.id.nav_around -> {
+                    val intent = Intent(this, AroundActivity::class.java)
+                    startActivityForResult(intent, REQUEST_AROUND)
                 }
             }
         } catch( e : Exception){

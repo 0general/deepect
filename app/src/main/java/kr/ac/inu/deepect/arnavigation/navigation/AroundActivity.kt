@@ -12,11 +12,12 @@ import androidx.appcompat.app.AppCompatActivity
 import com.skt.Tmap.TMapData
 import com.skt.Tmap.TMapPOIItem
 import com.skt.Tmap.TMapPoint
+import kotlinx.android.synthetic.main.activity_around.*
 import kotlinx.android.synthetic.main.activity_search.*
 import kr.ac.inu.deepect.R
 import kr.ac.inu.deepect.arnavigation.navigation.utils.StringUtils
 
-class SearchActivity : AppCompatActivity() {
+class AroundActivity : AppCompatActivity() {
 
 
     lateinit var mapData : TMapData
@@ -35,52 +36,53 @@ class SearchActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_search)
+        setContentView(R.layout.activity_around)
 
         mapData = TMapData()
 
         val adapter = SearchListAdapter()
         arrayPOI = ArrayList<POI>()
-        lvSearch.adapter = adapter
 
-        lvSearch.setOnItemClickListener(object : AdapterView.OnItemClickListener{
+        lvSearch_around.adapter = adapter
+
+        lvSearch_around.setOnItemClickListener(object : AdapterView.OnItemClickListener{
             override fun onItemClick(
-                    parent: AdapterView<*>?,
-                    view: View?,
-                    index : Int,
-                    id: Long
+                parent: AdapterView<*>?,
+                view: View?,
+                index : Int,
+                id: Long
             ) {
                 try{
                     if (index >= arrayPOI.size) {
                         return
                     }
 
-                    val builder = AlertDialog.Builder(this@SearchActivity)
+                    val builder = AlertDialog.Builder(this@AroundActivity)
                     builder.setTitle("안내")
-                            .setMessage("${arrayPOI.get(index).name}를 도착지로 설정하시겠습니까?")
-                            .setNegativeButton("아니오", null)
-                            .setPositiveButton("예", object : DialogInterface.OnClickListener{
-                                override fun onClick(dialog: DialogInterface?, which: Int) {
-                                    val intent = Intent().apply {
-                                        putExtra("POI", arrayPOI.get(index).name)
-                                        putExtra("LON", arrayPOI.get(index).longitute)
-                                        putExtra("LAT", arrayPOI.get(index).latitude)
-                                    }
-                                    setResult(Activity.RESULT_OK, intent)
-                                    finish()
+                        .setMessage("${arrayPOI.get(index).name}를 도착지로 설정하시겠습니까?")
+                        .setNegativeButton("아니오", null)
+                        .setPositiveButton("예", object : DialogInterface.OnClickListener{
+                            override fun onClick(dialog: DialogInterface?, which: Int) {
+                                val intent = Intent().apply {
+                                    putExtra("POI", arrayPOI.get(index).name)
+                                    putExtra("LON", arrayPOI.get(index).longitute)
+                                    putExtra("LAT", arrayPOI.get(index).latitude)
                                 }
-                            }).show()
+                                setResult(Activity.RESULT_OK, intent)
+                                finish()
+                            }
+                        }).show()
                 } catch (e : Exception){
                     Log.d("Exception:" , e.message)
                 }
             }
         })
 
-        btnSearch.setOnClickListener(object : View.OnClickListener{
+        btnSearch_around.setOnClickListener(object : View.OnClickListener{
             override fun onClick(v: View?) {
-                try {
-                    mapData.findAllPOI(editSearch.text.toString(), 20, object : TMapData.FindAllPOIListenerCallback{
-                        override fun onFindAllPOI(arrayList : java.util.ArrayList<TMapPOIItem>) {
+                try{
+                    mapData.findAroundNamePOI(TMapPoint(37.37748,126.65333), "lotteria", object : TMapData.FindAroundNamePOIListenerCallback {
+                        override fun onFindAroundNamePOI(arrayList: java.util.ArrayList<TMapPOIItem>) {
                             runOnUiThread(object : Runnable {
                                 override fun run() {
                                     adapter.clear()
@@ -88,17 +90,19 @@ class SearchActivity : AppCompatActivity() {
 
                                     for(i in 0 until arrayList.size){
                                         var poiItem : TMapPOIItem = arrayList.get(i)
-                                        val secondLine = StringUtils.join(
-                                                '/',
-                                                arrayOf(
-                                                        poiItem.upperBizName,
-                                                        poiItem.middleBizName,
-                                                        poiItem.lowerBizName
-                                                        //poiItem.detailBizName
-                                                )
-                                        )
-                                        adapter.addItem(poiItem.poiName, secondLine)
 
+                                        Log.d("아이템", "${arrayList.get(i)}")
+                                        val distance = poiItem.getDistance(TMapPoint(37.37748,126.65333)).toInt()
+                                        /*val secondLine = StringUtils.join('/', arrayOf(
+                                            poiItem.upperBizName,
+                                            poiItem.middleBizName,
+                                            poiItem.lowerBizName
+                                        ))*/
+
+                                        val secondLine = StringUtils.join('/', arrayOf(
+                                            "1","2","3"
+                                        ))
+                                        adapter.addItem(poiItem.poiName, "현재 위치로 부터 ${distance} 떨어져 있습니다.")
 
                                         val poi = POI()
                                         poi.name = poiItem.poiName
@@ -112,9 +116,10 @@ class SearchActivity : AppCompatActivity() {
                             })
                         }
                     })
-                } catch (e : Exception){
+                }catch (e : Exception){
                     Log.d("Exception", e.message)
                 }
+
             }
         })
 

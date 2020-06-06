@@ -1,26 +1,31 @@
 package kr.ac.inu.deepect.arnavigation.navigation
 
-import android.graphics.Bitmap
+import android.os.Looper
 import android.os.StrictMode
-import android.util.Base64
 import android.util.Log
-import com.google.flatbuffers.Utf8
 import java.io.*
 import java.net.Socket
 import java.net.UnknownHostException
 import java.util.logging.SocketHandler
 
 
-class ConnectServer(private val file : File) : Thread() {
+class ConnectServer(private val file : File, eventListener: EventListener?) : Thread() {
 
+    interface EventListener{
+        fun onSocketResult(result : String)
+        fun onSocketFailed()
+    }
+
+    private var listener = eventListener
+    private var handler = android.os.Handler(Looper.getMainLooper())
 
     private lateinit var clientSocket : Socket
     private lateinit var socketIn : BufferedReader
     private lateinit var socketOut : PrintWriter
     private lateinit var dis : DataInputStream
     private lateinit var dos : DataOutputStream
-    private val port = 5000
-    private val ip = "3.12.250.104"
+    private val port = 8000
+    private val ip = "172.30.1.21"
     private lateinit var mHandler: SocketHandler
     private lateinit var mThread: Thread
 
@@ -86,19 +91,48 @@ class ConnectServer(private val file : File) : Thread() {
             val tempfile = file
 
             try{
-                //socketIn = BufferedReader(InputStreamReader(clientSocket.getInputStream(), "UTF-8"))
-                socketOut = PrintWriter(BufferedWriter(OutputStreamWriter(clientSocket.getOutputStream())),true)
+                socketIn = BufferedReader(InputStreamReader(clientSocket.getInputStream(), "UTF-8"))
+                //socketOut = PrintWriter(BufferedWriter(OutputStreamWriter(clientSocket.getOutputStream())),true)
                 dis = DataInputStream(FileInputStream(tempfile))
                 dos = DataOutputStream(clientSocket.getOutputStream())
                 val buf = ByteArray(1024)
-                while (dis.read(buf) > 0) {
+                var read_length : Int = 0
+                var line : String = ""
+
+                /*while (dis.read(buf) > 0) {
                     dos.write(buf)
                     dos.flush()
-                }
+                }*/
+
+                do {
+                    read_length = dis.read(buf)
+                    if(read_length == -1)
+                        break
+                    dos.write(buf)
+                    dos.flush()
+
+                } while(read_length > 0)
+
+                //socketIn.readLine()
+
+
+                var StringBuilder = StringBuilder()
+
+                socketIn.close()
                 dos.close()
+                /*do {
+                    line = socketIn.readLine()
+                    //Log.d("여기옴?", "${line}")
+                    if(line == null)
+                        break
+                    StringBuilder.append(line)
+                } while(line != null)*/
+
+                onApiResult(line)
 
             } catch (e : Exception){
                 Log.d("error", "${e}")
+                onApiFailed()
             } finally {
                 clientSocket.close()
             }
@@ -111,6 +145,26 @@ class ConnectServer(private val file : File) : Thread() {
             Log.e("error" , "생성 Error : 보안위반")
         } catch( le : IllegalArgumentException) {
             Log.e("error", "생성 Error : 잘못된 파라미터 전달")
+        }
+    }
+
+    private  fun onApiResult(result: String){
+        if(listener != null){
+            handler.post(object : Runnable{
+                override fun run() {
+                    listener?.onSocketResult(result)
+                }
+            })
+        }
+    }
+
+    private fun onApiFailed() {
+        if(listener != null) {
+            handler.post(object : Runnable{
+                override fun run() {
+                    listener?.onSocketFailed()
+                }
+            })
         }
     }
 
