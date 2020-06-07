@@ -196,7 +196,7 @@ public class ARActivity extends AppCompatActivity {
 
         // Create a bitmap the size of the scene view.
         final Bitmap bitmap = Bitmap.createBitmap(view.getWidth(), view.getHeight(),
-                Bitmap.Config.RGB_565);
+                Bitmap.Config.ARGB_8888);
 
         // Create a handler thread to offload the processing of the image.
         final HandlerThread handlerThread = new HandlerThread("PixelCopier");
@@ -232,19 +232,19 @@ public class ARActivity extends AppCompatActivity {
                 Uri photoURI = FileProvider.getUriForFile(ARActivity.this,
                             ARActivity.this.getPackageName() + ".ar.codelab.name.provider",
                             photoFile);
+                Toast.makeText(this, "캡쳐되었습니다.", Toast.LENGTH_SHORT);
                 ConnectServer connectServer = new ConnectServer(photoFile);
                 connectServer.start();
-                Toast.makeText(this, "캡쳐되었습니다.", Toast.LENGTH_SHORT);
 //                Intent intent = new Intent(Intent.ACTION_VIEW, photoURI);
 //                intent.setDataAndType(photoURI, "image/*");
 //                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 //                startActivity(intent);
 
-                if (photoFile.delete()) {
-                    Log.d(TAG, "kmyLog, 삭제 성공");
-                } else {
-                    Log.d(TAG, "kmyLog, 삭제 실패");
-                }
+//                if (photoFile.delete()) {
+//                    Log.d(TAG, "kmyLog, 삭제 성공");
+//                } else {
+//                    Log.d(TAG, "kmyLog, 삭제 실패");
+//                }
             } else {
                 Toast toast = Toast.makeText(ARActivity.this,
                         "Failed to copyPixels: " + copyResult, Toast.LENGTH_LONG);
@@ -341,7 +341,6 @@ public class ARActivity extends AppCompatActivity {
         Button btnCorrection = findViewById(R.id.btnCorrection);
         btnCorrection.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                doesBlink = false;
                 descView.setVisibility(View.INVISIBLE);
                 descIndexView.setVisibility(View.INVISIBLE);
                 btnNext.setVisibility(View.INVISIBLE);
@@ -355,7 +354,6 @@ public class ARActivity extends AppCompatActivity {
 
         btnReturn.setOnClickListener(new Button.OnClickListener() {
             public void onClick(View v) {
-                doesBlink = true;
                 descView.setVisibility(View.VISIBLE);
                 descIndexView.setVisibility(View.VISIBLE);
                 btnNext.setVisibility(View.VISIBLE);
