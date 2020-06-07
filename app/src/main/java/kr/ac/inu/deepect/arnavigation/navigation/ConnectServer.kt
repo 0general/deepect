@@ -22,8 +22,10 @@ class ConnectServer(private val file : File, eventListener: EventListener?) : Th
     private lateinit var clientSocket : Socket
     private lateinit var socketIn : BufferedReader
     private lateinit var socketOut : PrintWriter
-    private lateinit var dis : DataInputStream
-    private lateinit var dos : DataOutputStream
+    private lateinit var fis : DataInputStream
+    private lateinit var sos : DataOutputStream
+    private lateinit var sis : DataInputStream
+
     private val port = 8000
     private val ip = "172.30.1.21"
     private lateinit var mHandler: SocketHandler
@@ -91,49 +93,38 @@ class ConnectServer(private val file : File, eventListener: EventListener?) : Th
             val tempfile = file
 
             try{
-                socketIn = BufferedReader(InputStreamReader(clientSocket.getInputStream(), "UTF-8"))
+                //socketIn = BufferedReader(InputStreamReader(clientSocket.getInputStream(), "UTF-8"))
                 //socketOut = PrintWriter(BufferedWriter(OutputStreamWriter(clientSocket.getOutputStream())),true)
-                dis = DataInputStream(FileInputStream(tempfile))
-                dos = DataOutputStream(clientSocket.getOutputStream())
-                val buf = ByteArray(1024)
-                var read_length : Int = 0
-                var line : String = ""
-
-                /*while (dis.read(buf) > 0) {
-                    dos.write(buf)
-                    dos.flush()
-                }*/
-
-                do {
-                    read_length = dis.read(buf)
-                    if(read_length == -1)
+                fis = DataInputStream(FileInputStream(tempfile))
+                sos = DataOutputStream(clientSocket.getOutputStream())
+                sis = DataInputStream(clientSocket.getInputStream())
+                val tempBuf = ByteArray(1024)
+                val wholeBuf = ByteArray(1024)
+                while (fis.read(tempBuf) > 0)
+                    sos.write(tempBuf)
+                sos.flush()
+                clientSocket.shutdownOutput()
+                var size = 0
+                var index = 0
+                while (true) {
+                    size = sis.read(tempBuf)
+                    if (size <= 0)
                         break
-                    dos.write(buf)
-                    dos.flush()
+                    System.arraycopy(tempBuf, 0, wholeBuf, index, size)
+                    index += size
+                }
+                val str = String(wholeBuf, 0, index)
+                Log.d("test", str)
+                clientSocket.shutdownInput()
 
-                } while(read_length > 0)
-
-                //socketIn.readLine()
-
-
-                var StringBuilder = StringBuilder()
-
-                socketIn.close()
-                dos.close()
-                /*do {
-                    line = socketIn.readLine()
-                    //Log.d("여기옴?", "${line}")
-                    if(line == null)
-                        break
-                    StringBuilder.append(line)
-                } while(line != null)*/
-
-                onApiResult(line)
-
+                onApiResult(str)
             } catch (e : Exception){
                 Log.d("error", "${e}")
                 onApiFailed()
             } finally {
+                fis.close()
+                sis.close()
+                sos.close()
                 clientSocket.close()
             }
 
@@ -147,6 +138,7 @@ class ConnectServer(private val file : File, eventListener: EventListener?) : Th
             Log.e("error", "생성 Error : 잘못된 파라미터 전달")
         }
     }
+
 
     private  fun onApiResult(result: String){
         if(listener != null){

@@ -84,6 +84,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
     lateinit var adapter: SearchListAdapter
     lateinit var mapData : TMapData
+    lateinit var category : String
 
 
     lateinit var arrayPOI : ArrayList<POI>
@@ -137,7 +138,8 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                    File("/mnt/sdcard/DCIM/Camera/20180729_194225_HDR.jpg"),
                    object : ConnectServer.EventListener {
                        override fun onSocketResult(result: String) {
-                           toolbar.setTitle(result)
+                           toolbar.setTitle(result + "을 찾아라!")
+                           category = result
                        }
 
                        override fun onSocketFailed() {
@@ -640,7 +642,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
     }
 
-    private fun getRoute(endPoint: TMapPoint){
+   /* private fun getRoute(endPoint: TMapPoint){
 
         val currentLocation : Location? = gpsManager.getCurrentLocation()
         val startPoint = TMapPoint(currentLocation!!.latitude , currentLocation!!.longitude)
@@ -694,7 +696,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
             })
             routeApi.start()
         }
-    }
+    }*/
 
     private fun setDestination(destination : TMapPoint) {
         //clear previous destination
@@ -893,7 +895,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                 try {
                     mapData.findAroundNamePOI(
                         Now_Point,
-                        "lotteria",
+                        category,
                         object : TMapData.FindAroundNamePOIListenerCallback {
                             override fun onFindAroundNamePOI(arrayList: java.util.ArrayList<TMapPOIItem>) {
                                 runOnUiThread(object : Runnable {
