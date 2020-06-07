@@ -62,7 +62,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
     var Now_Point : TMapPoint? = null
     var Restart_Point : TMapPoint? = null
-    var Destination_Point : TMapPoint? = null
+
 
 
     var start  = false
@@ -175,13 +175,12 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                                         toolbar.setTitle("출발지 : "+arrayPOI.get(index).name)
                                     }
                                     popup.visibility = View.GONE
-                                    /*val intent = Intent().apply {
-                                        putExtra("POI", arrayPOI.get(index).name)
-                                        putExtra("LON", arrayPOI.get(index).longitute)
-                                        putExtra("LAT", arrayPOI.get(index).latitude)
+                                    aroundcontroller = 0
+
+                                    if(destination != null){
+                                        setNavigationMode(true)
                                     }
-                                    setResult(Activity.RESULT_OK, intent)
-                                    finish()*/
+
                                 }
                             }).show()
                     } catch (e : Exception){
@@ -706,7 +705,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
         }
 
         this.destination = destination
-        Destination_Point = destination
+
         ARActivity.setDestination(destination)
 
 
