@@ -80,6 +80,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
     private val REQUEST_SEARCH = 0x0001
     private val REQUEST_HISTORY = 0x0002
     private val REQUEST_AROUND = 0x0003
+    private val REQUEST_AR = 0x0004
 
 
     lateinit var adapter: SearchListAdapter
@@ -130,7 +131,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
             btnAR.setOnClickListener{
                 val intent = Intent(this, ARActivity::class.java)
-                startActivity(intent)
+                startActivityForResult(intent, REQUEST_AR)
             }
 
            connectserver.setOnClickListener {
@@ -140,6 +141,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                        override fun onSocketResult(result: String) {
                            toolbar.setTitle(result + "을 찾아라!")
                            category = result
+
                        }
 
                        override fun onSocketFailed() {
@@ -178,6 +180,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                                     }
                                     popup.visibility = View.GONE
                                     aroundcontroller = 0
+
 
                                     if(destination != null){
                                         setNavigationMode(true)
@@ -790,6 +793,65 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                         setDestination(mapPoint)
                         mapView.setCenterPoint(longitude, latitude)
                     }
+                }
+                REQUEST_AR -> {
+                    moveToCurrentLocation()
+                    val poi = data?.getStringExtra("POI")
+                    val lat = data?.getDoubleExtra("LAT", 0.0)
+                    val lon = data?.getDoubleExtra("LON", 0.0)
+
+                    if(lat != null && lon != null) {
+                        val mapPoint = TMapPoint(lat, lon)
+                        setDestination(mapPoint)
+                        mapView.setCenterPoint(lon, lat)
+                    }
+
+                    if (Now_Point == null) {
+                        Toast.makeText(this@MainActivity, "내 위치가 설정되지 않았습니다." ,Toast.LENGTH_SHORT )
+                    } else {
+                        try {
+                            mapData.findAroundNamePOI(
+                                Now_Point,
+                                poi,
+                                object : TMapData.FindAroundNamePOIListenerCallback {
+                                    override fun onFindAroundNamePOI(arrayList: java.util.ArrayList<TMapPOIItem>) {
+                                        runOnUiThread(object : Runnable {
+                                            override fun run() {
+                                                adapter.clear()
+                                                arrayPOI.clear()
+
+                                                for (i in 0 until arrayList.size) {
+                                                    var poiItem: TMapPOIItem = arrayList.get(i)
+
+                                                    Log.d("아이템", "${arrayList.get(i)}")
+                                                    val distance =
+                                                        poiItem.getDistance(Now_Point)
+                                                            .toInt()
+
+                                                    adapter.addItem(
+                                                        poiItem.poiName,
+                                                        "현재 위치로 부터 ${distance}m 떨어져 있습니다."
+                                                    )
+
+                                                    val poi = POI()
+                                                    poi.name = poiItem.poiName
+                                                    poi.latitude = poiItem.poiPoint.latitude
+                                                    poi.longitute = poiItem.poiPoint.longitude
+
+                                                    arrayPOI.add(poi)
+                                                }
+                                                adapter.notifyDataSetChanged()
+                                                popup.visibility = View.VISIBLE
+                                                aroundcontroller = 1
+                                            }
+                                        })
+                                    }
+                                })
+                        } catch (e: Exception) {
+                            Log.d("Exception", e.message)
+                        }
+                    }
+
                 }
 
                 else -> {
