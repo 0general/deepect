@@ -8,10 +8,13 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.util.Log;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 
+import kr.ac.inu.deepect.R;
+import kr.ac.inu.deepect.arnavigation.ARActivity;
 import kr.ac.inu.deepect.arnavigation.LocationScene;
 import kr.ac.inu.deepect.arnavigation.utils.KalmanLatLong;
 
@@ -38,6 +41,7 @@ public class DeviceLocation implements LocationListener {
     private LocationScene locationScene;
     private int minimumAccuracy = 25;
     private Context context;
+    static boolean isaccuracylow;
 
     public DeviceLocation(Context context, LocationScene locationScene) {
         this.context = context.getApplicationContext();
@@ -49,9 +53,10 @@ public class DeviceLocation implements LocationListener {
         inaccurateLocationList = new ArrayList<>();
         kalmanNGLocationList = new ArrayList<>();
         kalmanFilter = new KalmanLatLong(3);
-
+        isaccuracylow = false;
         startUpdatingLocation();
     }
+
 
     public int getMinimumAccuracy() {
         return minimumAccuracy;
@@ -88,6 +93,8 @@ public class DeviceLocation implements LocationListener {
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
     }
+
+    public static boolean getIsAccuracyLow() { return isaccuracylow; }
 
 
     public void startUpdatingLocation() {
@@ -195,7 +202,14 @@ public class DeviceLocation implements LocationListener {
             inaccurateLocationList.add(location);
             if (locationScene.isDebugEnabled())
                 Toast.makeText(context, "Rejected: innacurate", Toast.LENGTH_SHORT).show();
+            isaccuracylow = true;
             return false;
+        }
+        else {
+            Log.d(TAG, "Accuracy is okay.");
+            if (locationScene.isDebugEnabled())
+                Toast.makeText(context, "Rejected: innacurate", Toast.LENGTH_SHORT).show();
+            isaccuracylow = false;
         }
 
 

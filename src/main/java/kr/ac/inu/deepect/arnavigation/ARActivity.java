@@ -1,6 +1,7 @@
 package kr.ac.inu.deepect.arnavigation;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Point;
@@ -13,7 +14,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Log;
 import android.view.Display;
-import android.view.MotionEvent;
 import android.view.PixelCopy;
 import android.view.View;
 import android.view.WindowManager;
@@ -24,10 +24,10 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
-import com.google.android.material.snackbar.Snackbar;
 import com.google.ar.core.Config;
 import com.google.ar.core.Frame;
 import com.google.ar.core.Session;
@@ -39,15 +39,12 @@ import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.rendering.ViewRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
-import com.google.ar.sceneform.ux.BaseArFragment;
 import com.skt.Tmap.TMapPoint;
 
 import org.jetbrains.annotations.NotNull;
-import org.w3c.dom.Text;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -60,8 +57,10 @@ import java.util.concurrent.ExecutionException;
 import kr.ac.inu.deepect.R;
 import kr.ac.inu.deepect.arnavigation.navigation.ConnectServer;
 import kr.ac.inu.deepect.arnavigation.navigation.GpsManager;
+import kr.ac.inu.deepect.arnavigation.navigation.MainActivity;
 import kr.ac.inu.deepect.arnavigation.rendering.LocationNode;
 import kr.ac.inu.deepect.arnavigation.rendering.LocationNodeRender;
+import kr.ac.inu.deepect.arnavigation.sensor.DeviceLocation;
 import kr.ac.inu.deepect.arnavigation.utils.ARLocationPermissionHelper;
 
 public class ARActivity extends AppCompatActivity {
@@ -233,7 +232,32 @@ public class ARActivity extends AppCompatActivity {
                             ARActivity.this.getPackageName() + ".ar.codelab.name.provider",
                             photoFile);
                 Toast.makeText(this, "캡쳐되었습니다.", Toast.LENGTH_SHORT);
-                ConnectServer connectServer = new ConnectServer(photoFile);
+                ConnectServer connectServer = new ConnectServer(photoFile,
+                        new ConnectServer.EventListener() {
+                    public void onSocketResult(String result) {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(ARActivity.this);
+                        builder.setTitle("안내")
+                                .setMessage(result + "을(를) 출발지로 다시 설정하시겠습니까?")
+                                .setNegativeButton("아니오", null)
+                                .setPositiveButton("예", new DialogInterface.OnClickListener(){
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        Intent intent = new Intent(ARActivity.this, MainActivity.class);
+                                        intent.putExtra("start", result);
+                                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                        startActivity(intent);
+                                    }
+                        }).show();
+                    }
+
+                    public void onSocketFailed() {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(ARActivity.this);
+                        builder.setTitle("안내")
+                                .setMessage("실패")
+                                .setPositiveButton("확인", null)
+                                .show();
+                    }
+                });
                 connectServer.start();
 //                Intent intent = new Intent(Intent.ACTION_VIEW, photoURI);
 //                intent.setDataAndType(photoURI, "image/*");
@@ -285,6 +309,7 @@ public class ARActivity extends AppCompatActivity {
         TextView descView = findViewById(R.id.descView);
         TextView descIndexView = findViewById(R.id.descIndexView);
         TextView correctionView = findViewById(R.id.correctionView);
+        TextView accuracyView = findViewById(R.id.accuracyView);
         correctionView.setVisibility(View.INVISIBLE);
 
         descIndexView.setText(String.valueOf(descIndex + 1));
@@ -526,6 +551,12 @@ public class ARActivity extends AppCompatActivity {
                                     int index = finalI + 1;
                                     String indexString = Integer.toString(index);
                                     String arrow;
+                                    if (DeviceLocation.getIsAccuracyLow()) {
+                                        accuracyView.setBackgroundResource(R.drawable.accuracy_style_red);
+                                    }
+                                    else {
+                                        accuracyView.setBackgroundResource(R.drawable.accuracy_style_green);
+                                    }
 //                                    if (angle >= 30 && angle < 60)
 //                                        arrow = "↗";
 //                                    else if (angle <= -30 && angle > -60)

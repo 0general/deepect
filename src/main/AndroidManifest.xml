@@ -53,9 +53,10 @@
             android:screenOrientation="fullUser"
             android:theme="@style/AppTheme.NoActionBar"/>
         <activity
-            android:name="kr.ac.inu.deepect.arnavigation.navigation.SearchActivity"
+            android:name="kr.ac.inu.deepect.arnavigation.navigation.AroundActivity"
             android:label="장소 검색"
-            android:screenOrientation="fullUser"/>
+            android:screenOrientation="fullUser"
+            />
         <activity
             android:name="kr.ac.inu.deepect.arnavigation.navigation.HistoryActivity"
             android:label="최근 기록"

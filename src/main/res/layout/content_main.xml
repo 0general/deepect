@@ -20,12 +20,13 @@
             android:id="@+id/frameMap">
 
         </FrameLayout>
-<!--        <Button-->
-<!--            android:id="@+id/connectserver"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:text = "Server연결"-->
-<!--            android:layout_marginTop="50dp"/>-->
+        <Button
+            android:id="@+id/connectserver"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text = "Server연결"
+            android:layout_marginTop="50dp"/>
+
         <Switch
             android:id="@+id/switch1"
             android:layout_width="wrap_content"
@@ -130,9 +131,16 @@
                 android:singleLine="true"
                 android:textSize="20sp"
 
-
                 />
         </RelativeLayout>
+
+        <ListView
+            android:layout_width="match_parent"
+            android:layout_height="350dp"
+            android:visibility="invisible"
+            android:id="@+id/popup"
+            android:background="@drawable/button_design"/>
+
 
 
 

@@ -1,6 +1,7 @@
 package kr.ac.inu.deepect.arnavigation.navigation
 
 import android.app.Activity
+import android.app.Dialog
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
@@ -14,9 +15,7 @@ import android.os.Looper
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
-import android.widget.Button
-import android.widget.CompoundButton
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -25,6 +24,7 @@ import androidx.core.view.GravityCompat
 import com.google.android.material.navigation.NavigationView
 import com.skt.Tmap.*
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.activity_search.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import kr.ac.inu.deepect.R
@@ -32,6 +32,7 @@ import kr.ac.inu.deepect.arnavigation.ARActivity
 import kr.ac.inu.deepect.arnavigation.navigation.*
 import kr.ac.inu.deepect.arnavigation.navigation.ParseJson.Companion.parseJSON
 import kr.ac.inu.deepect.arnavigation.navigation.utils.LocationUtils
+import kr.ac.inu.deepect.arnavigation.navigation.utils.StringUtils
 import org.json.JSONObject
 import java.io.BufferedWriter
 import java.io.File
@@ -59,13 +60,17 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
     private var backPressTime : Long = 0
 
-    var Start_Point : TMapPoint? = null
-    var Destination_Point : TMapPoint? = null
+    var Now_Point : TMapPoint? = null
+    var Restart_Point : TMapPoint? = null
+
 
 
     var start  = false
 
     var controller : Int = 0
+    var aroundcontroller : Int = 0
+
+
 
 
     private lateinit var Address : String
@@ -74,9 +79,22 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
     private val REQUEST_SEARCH = 0x0001
     private val REQUEST_HISTORY = 0x0002
+    private val REQUEST_AROUND = 0x0003
 
 
+    lateinit var adapter: SearchListAdapter
+    lateinit var mapData : TMapData
+    lateinit var category : String
 
+
+    lateinit var arrayPOI : ArrayList<POI>
+    companion object{
+        class POI{
+            var name : String? = null
+            var latitude : Double? = null
+            var longitute : Double? = null
+        }
+    }
 
     //Marker
     private var markerIdList = ArrayList<String>()
@@ -86,6 +104,11 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val intent = getIntent()
+        if (intent.getStringExtra("result") != null) {
+            // blah blah
+        }
+
 
         setContentView(R.layout.activity_main)
         mapView = TMapView(this)
@@ -95,6 +118,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
             //gps = TMapGpsManager(this)
             initView()
 
+            mapData = TMapData()
             checkPermission()
 
             GpsManager.init(this)
@@ -105,17 +129,75 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
 
 
+            arrayPOI = ArrayList<POI>()
+            adapter = SearchListAdapter()
+            popup.adapter = adapter
+
             btnAR.setOnClickListener{
                 val intent = Intent(this, ARActivity::class.java)
                 startActivity(intent)
             }
 
-//            connectserver.setOnClickListener {
-//                val connetion = ConnectServer()
-//                connetion.start()
-//            }
+            connectserver.setOnClickListener {
+                val connetion = ConnectServer(
+                        File("/mnt/sdcard/DCIM/Camera/20180729_194225_HDR.jpg"),
+                        object : ConnectServer.EventListener {
+                            override fun onSocketResult(result: String) {
+                                toolbar.setTitle(result + "을 찾아라!")
+                                category = result
+                            }
+
+                            override fun onSocketFailed() {
+                                val builder = AlertDialog.Builder(this@MainActivity)
+                                        .setTitle("안내")
+                                        .setMessage("실패")
+                                        .setPositiveButton("확인", null)
+                                        .show()
+                            }
+                        })
+                connetion.start()
+            }
+
+            popup.setOnItemClickListener(object : AdapterView.OnItemClickListener{
+                override fun onItemClick(
+                        parent: AdapterView<*>?,
+                        view: View?,
+                        index : Int,
+                        id: Long
+                ) {
+                    try{
+                        if (index >= arrayPOI.size) {
+                            return
+                        }
+
+                        val builder = AlertDialog.Builder(this@MainActivity)
+                        builder.setTitle("안내")
+                                .setMessage("${arrayPOI.get(index).name}를 출발지로 다시 설정하시겠습니까?")
+                                .setNegativeButton("아니오", null)
+                                .setPositiveButton("예", object : DialogInterface.OnClickListener{
+                                    override fun onClick(dialog: DialogInterface?, which: Int) {
+
+                                        Restart_Point = TMapPoint(arrayPOI.get(index).latitude!!, arrayPOI.get(index).longitute!!)
+                                        if(Restart_Point != null){
+                                            toolbar.setTitle("출발지 : "+arrayPOI.get(index).name)
+                                        }
+                                        popup.visibility = View.GONE
+                                        aroundcontroller = 0
+
+                                        if(destination != null){
+                                            setNavigationMode(true)
+                                        }
+
+                                    }
+                                }).show()
+                    } catch (e : Exception){
+                        Log.d("Exception:" , e.message)
+                    }
+                }
+            })
 
             moveToCurrentLocation()
+
         } catch (e: Exception){
             Log.d("Exception : ", "cant initialize ${e.message}")
         }
@@ -223,6 +305,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
             if (currentLocation != null) {
                 mapView.setLocationPoint(currentLocation.longitude, currentLocation.latitude)
                 mapView.setCenterPoint(currentLocation.longitude, currentLocation.latitude)
+                Now_Point = TMapPoint(currentLocation.latitude, currentLocation.longitude)
             }
         } catch (ex : Exception) {
             Toast.makeText(this, "현재 위치를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
@@ -366,69 +449,136 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                 val endpoint = destination
                 //getRoute(endpoint!!)
 
-                val routeApi =
-                        RouteApi(this, startPoint, endpoint!!, object : RouteApi.EventListener {
-                            override fun onApiResult(jsonString: String) {
-                                Toast.makeText(this@MainActivity, "요청성공", Toast.LENGTH_SHORT).show()
-                                try {
-                                    val objects: JSONObject = JSONObject(jsonString)
-                                    Log.d("result:", objects.toString())
+                if(Restart_Point == null){
+                    val routeApi =
+                            RouteApi(this, startPoint, endpoint!!, object : RouteApi.EventListener {
+                                override fun onApiResult(jsonString: String) {
+                                    Toast.makeText(this@MainActivity, "요청성공", Toast.LENGTH_SHORT).show()
+                                    try {
+                                        val objects: JSONObject = JSONObject(jsonString)
+                                        Log.d("result:", objects.toString())
 
-                                    val polyLine = parseJSON(objects)
-                                    Log.d("totaltime","${ParseJson.totalTime}")
+                                        val polyLine = parseJSON(objects)
+                                        Log.d("totaltime","${ParseJson.totalTime}")
 
-                                    val now = System.currentTimeMillis()
-                                    //Log.d("now", "${now}")
-                                    val expectedtime : Long = now + (ParseJson.totalTime!!.toLong()*1000L)
-                                    //Log.d("et", "${expectedtime}")
-                                    val date1 =Date(expectedtime)
-                                    val sdfNow = SimpleDateFormat("HH:MM")
-                                    val formatDate = sdfNow.format(date1)
-                                    totaltime.text = "${formatDate} 도착예정"
+                                        val now = System.currentTimeMillis()
+                                        //Log.d("now", "${now}")
+                                        val expectedtime : Long = now + (ParseJson.totalTime!!.toLong()*1000L)
+                                        //Log.d("et", "${expectedtime}")
+                                        val date1 =Date(expectedtime)
+                                        val sdfNow = SimpleDateFormat("HH:MM")
+                                        val formatDate = sdfNow.format(date1)
+                                        totaltime.text = "${formatDate} 도착예정"
 
 
-                                    runOnUiThread(object : Runnable {
-                                        override fun run() {
-                                            val linePoints: ArrayList<TMapPoint> =
-                                                    polyLine.getLinePoint()
-                                            markerIdList.clear()
+                                        runOnUiThread(object : Runnable {
+                                            override fun run() {
+                                                val linePoints: ArrayList<TMapPoint> =
+                                                        polyLine.getLinePoint()
+                                                markerIdList.clear()
 
-                                            var i = 0
-                                            mapView.removeAllMarkerItem()
+                                                var i = 0
+                                                mapView.removeAllMarkerItem()
 
-                                            for (p: TMapPoint in linePoints) {
-                                                val markerItem = TMapMarkerItem()
-                                                markerItem.tMapPoint = p
+                                                for (p: TMapPoint in linePoints) {
+                                                    val markerItem = TMapMarkerItem()
+                                                    markerItem.tMapPoint = p
 
-                                                val id = "i" + i++
-                                                Log.d("id", id)
-                                                markerItem.id = id
+                                                    val id = "i" + i++
+                                                    Log.d("id", id)
+                                                    markerItem.id = id
 
-                                                //mapView.addMarkerItem(id, markerItem)
+                                                    //mapView.addMarkerItem(id, markerItem)
 
-                                                markerIdList.add(id)
+                                                    markerIdList.add(id)
+                                                }
+
+                                                mapView.addTMapPath(polyLine)
+
+
+                                                pathManager.setPolyLine(polyLine)
+
+                                                controller = 1
+
                                             }
+                                        })
+                                    } catch (ex: Exception) {
+                                        Log.d("EXC", ex.message)
+                                    }
 
-                                            mapView.addTMapPath(polyLine)
-
-
-                                            pathManager.setPolyLine(polyLine)
-
-                                            controller = 1
-
-                                        }
-                                    })
-                                } catch (ex: Exception) {
-                                    Log.d("EXC", ex.message)
                                 }
 
-                            }
+                                override fun onApiFailed() {
+                                    Toast.makeText(this@MainActivity, "요청실패", Toast.LENGTH_SHORT).show()
+                                }
+                            })
+                    routeApi.start()
+                } else {
+                    val routeApi =
+                            RouteApi(this, Restart_Point!!, endpoint!!, object : RouteApi.EventListener {
+                                override fun onApiResult(jsonString: String) {
+                                    Toast.makeText(this@MainActivity, "요청성공", Toast.LENGTH_SHORT).show()
+                                    try {
+                                        val objects: JSONObject = JSONObject(jsonString)
+                                        Log.d("result:", objects.toString())
 
-                            override fun onApiFailed() {
-                                Toast.makeText(this@MainActivity, "요청실패", Toast.LENGTH_SHORT).show()
-                            }
-                        })
-                routeApi.start()
+                                        val polyLine = parseJSON(objects)
+                                        Log.d("totaltime","${ParseJson.totalTime}")
+
+                                        val now = System.currentTimeMillis()
+                                        //Log.d("now", "${now}")
+                                        val expectedtime : Long = now + (ParseJson.totalTime!!.toLong()*1000L)
+                                        //Log.d("et", "${expectedtime}")
+                                        val date1 =Date(expectedtime)
+                                        val sdfNow = SimpleDateFormat("HH:MM")
+                                        val formatDate = sdfNow.format(date1)
+                                        totaltime.text = "${formatDate} 도착예정"
+
+
+                                        runOnUiThread(object : Runnable {
+                                            override fun run() {
+                                                val linePoints: ArrayList<TMapPoint> =
+                                                        polyLine.getLinePoint()
+                                                markerIdList.clear()
+
+                                                var i = 0
+                                                mapView.removeAllMarkerItem()
+
+                                                for (p: TMapPoint in linePoints) {
+                                                    val markerItem = TMapMarkerItem()
+                                                    markerItem.tMapPoint = p
+
+                                                    val id = "i" + i++
+                                                    Log.d("id", id)
+                                                    markerItem.id = id
+
+                                                    //mapView.addMarkerItem(id, markerItem)
+
+                                                    markerIdList.add(id)
+                                                }
+
+                                                mapView.addTMapPath(polyLine)
+
+
+                                                pathManager.setPolyLine(polyLine)
+
+                                                controller = 1
+
+                                            }
+                                        })
+                                    } catch (ex: Exception) {
+                                        Log.d("EXC", ex.message)
+                                    }
+                                }
+                                override fun onApiFailed() {
+                                    Toast.makeText(this@MainActivity, "요청실패", Toast.LENGTH_SHORT).show()
+                                }
+                            })
+                    routeApi.start()
+                    Restart_Point = null
+                }
+
+
 
                 setTrackingMode()
                 setSelectionMode(false)
@@ -497,61 +647,47 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
     }
 
-    private fun getRoute(endPoint: TMapPoint){
-
-        val currentLocation : Location? = gpsManager.getCurrentLocation()
-        val startPoint = TMapPoint(currentLocation!!.latitude , currentLocation!!.longitude)
-
-        if(startPoint != null) {
-            val routeApi = RouteApi(this, startPoint, endPoint, object : RouteApi.EventListener {
-                override fun onApiResult(jsonString : String) {
-                    Toast.makeText(this@MainActivity, "요청성공", Toast.LENGTH_SHORT).show()
-                    try {
-                        val objects : JSONObject = JSONObject(jsonString)
-                        Log.d("result:", objects.toString())
-
-                        val polyLine = parseJSON(objects)
-
-                        runOnUiThread(object : Runnable {
-                            override fun run() {
-                                val linePoints : ArrayList<TMapPoint> = polyLine.getLinePoint()
-                                markerIdList.clear()
-
-                                var i = 0
-                                mapView.removeAllMarkerItem()
-
-                                for (p : TMapPoint in linePoints) {
-                                    val markerItem = TMapMarkerItem()
-                                    markerItem.tMapPoint = p
-
-                                    val id = "i" + i++
-                                    Log.d("id", id)
-                                    markerItem.id = id
-
-                                    mapView.addMarkerItem(id, markerItem)
-
-                                    markerIdList.add(id)
-                                }
-
-                                mapView.addTMapPath(polyLine)
-
-                                pathManager.setPolyLine(polyLine)
-
-                            }
-                        })
-                    } catch (ex : Exception) {
-                        Log.d("EXC", ex.message)
-                    }
-
-                }
-
-                override fun onApiFailed() {
-                    Toast.makeText(this@MainActivity, "요청실패", Toast.LENGTH_SHORT).show()
-                }
-            })
-            routeApi.start()
-        }
-    }
+    /* private fun getRoute(endPoint: TMapPoint){
+         val currentLocation : Location? = gpsManager.getCurrentLocation()
+         val startPoint = TMapPoint(currentLocation!!.latitude , currentLocation!!.longitude)
+         if(startPoint != null) {
+             val routeApi = RouteApi(this, startPoint, endPoint, object : RouteApi.EventListener {
+                 override fun onApiResult(jsonString : String) {
+                     Toast.makeText(this@MainActivity, "요청성공", Toast.LENGTH_SHORT).show()
+                     try {
+                         val objects : JSONObject = JSONObject(jsonString)
+                         Log.d("result:", objects.toString())
+                         val polyLine = parseJSON(objects)
+                         runOnUiThread(object : Runnable {
+                             override fun run() {
+                                 val linePoints : ArrayList<TMapPoint> = polyLine.getLinePoint()
+                                 markerIdList.clear()
+                                 var i = 0
+                                 mapView.removeAllMarkerItem()
+                                 for (p : TMapPoint in linePoints) {
+                                     val markerItem = TMapMarkerItem()
+                                     markerItem.tMapPoint = p
+                                     val id = "i" + i++
+                                     Log.d("id", id)
+                                     markerItem.id = id
+                                     mapView.addMarkerItem(id, markerItem)
+                                     markerIdList.add(id)
+                                 }
+                                 mapView.addTMapPath(polyLine)
+                                 pathManager.setPolyLine(polyLine)
+                             }
+                         })
+                     } catch (ex : Exception) {
+                         Log.d("EXC", ex.message)
+                     }
+                 }
+                 override fun onApiFailed() {
+                     Toast.makeText(this@MainActivity, "요청실패", Toast.LENGTH_SHORT).show()
+                 }
+             })
+             routeApi.start()
+         }
+     }*/
 
     private fun setDestination(destination : TMapPoint) {
         //clear previous destination
@@ -562,7 +698,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
         }
 
         this.destination = destination
-        Destination_Point = destination
+
         ARActivity.setDestination(destination)
 
 
@@ -583,6 +719,9 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
         if(drawer_layout.isDrawerOpen(GravityCompat.START)){
             drawer_layout.closeDrawer(GravityCompat.START)
+        } else if(aroundcontroller == 1){
+            popup.visibility = View.GONE
+            aroundcontroller = 0
         } else if(navigationMode){
             timer.cancel()
             setNavigationMode(false)
@@ -642,8 +781,8 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                         setDestination(mapPoint)
                         mapView.setCenterPoint(longitude, latitude)
                     }
-
                 }
+
                 else -> {
                     super.onActivityResult(requestCode, resultCode, data)
                 }
@@ -664,6 +803,10 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                 R.id.nav_history -> {
                     val intent = Intent(this, HistoryActivity::class.java)
                     startActivityForResult(intent, REQUEST_HISTORY)
+                }
+                R.id.nav_around -> {
+                    val intent = Intent(this, AroundActivity::class.java)
+                    startActivityForResult(intent, REQUEST_AROUND)
                 }
             }
         } catch( e : Exception){
@@ -737,8 +880,55 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
     private val btnNowClicked = object : View.OnClickListener {
         override fun onClick(v: View?) {
             moveToCurrentLocation()
+            if (Now_Point == null) {
+                Toast.makeText(this@MainActivity, "내 위치가 설정되지 않았습니다." ,Toast.LENGTH_SHORT )
+            } else {
+                try {
+                    mapData.findAroundNamePOI(
+                            Now_Point,
+                            category,
+                            object : TMapData.FindAroundNamePOIListenerCallback {
+                                override fun onFindAroundNamePOI(arrayList: java.util.ArrayList<TMapPOIItem>) {
+                                    runOnUiThread(object : Runnable {
+                                        override fun run() {
+                                            adapter.clear()
+                                            arrayPOI.clear()
+
+                                            for (i in 0 until arrayList.size) {
+                                                var poiItem: TMapPOIItem = arrayList.get(i)
+
+                                                Log.d("아이템", "${arrayList.get(i)}")
+                                                val distance =
+                                                        poiItem.getDistance(Now_Point)
+                                                                .toInt()
+
+                                                adapter.addItem(
+                                                        poiItem.poiName,
+                                                        "현재 위치로 부터 ${distance}m 떨어져 있습니다."
+                                                )
+
+                                                val poi = POI()
+                                                poi.name = poiItem.poiName
+                                                poi.latitude = poiItem.poiPoint.latitude
+                                                poi.longitute = poiItem.poiPoint.longitude
+
+                                                arrayPOI.add(poi)
+                                            }
+                                            adapter.notifyDataSetChanged()
+                                            popup.visibility = View.VISIBLE
+                                            aroundcontroller = 1
+                                        }
+                                    })
+                                }
+                            })
+                } catch (e: Exception) {
+                    Log.d("Exception", e.message)
+                }
+
+            }
         }
     }
+
 
     private val btnSwitched = object : CompoundButton.OnCheckedChangeListener{
         override fun onCheckedChanged(p0: CompoundButton?, isChecked: Boolean) {
@@ -750,7 +940,5 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
         }
     }
-
-
 
 }
