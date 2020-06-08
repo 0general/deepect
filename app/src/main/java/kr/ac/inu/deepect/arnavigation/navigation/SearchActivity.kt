@@ -39,6 +39,12 @@ class SearchActivity : AppCompatActivity() {
 
         mapData = TMapData()
 
+        val resultintent = intent
+        val lat = resultintent.getDoubleExtra("lat", 0.0)
+        val lon = resultintent.getDoubleExtra("lon", 0.0)
+
+        Log.d("넘어오냐", "${lat}, ${lon}")
+
         val adapter = SearchListAdapter()
         arrayPOI = ArrayList<POI>()
         lvSearch.adapter = adapter
@@ -78,9 +84,9 @@ class SearchActivity : AppCompatActivity() {
 
         btnSearch.setOnClickListener(object : View.OnClickListener{
             override fun onClick(v: View?) {
-                try {
-                    mapData.findAllPOI(editSearch.text.toString(), 20, object : TMapData.FindAllPOIListenerCallback{
-                        override fun onFindAllPOI(arrayList : java.util.ArrayList<TMapPOIItem>) {
+                try{
+                    mapData.findAroundNamePOI(TMapPoint(lat, lon), editSearch.text.toString(), object : TMapData.FindAroundNamePOIListenerCallback {
+                        override fun onFindAroundNamePOI(arrayList: java.util.ArrayList<TMapPOIItem>) {
                             runOnUiThread(object : Runnable {
                                 override fun run() {
                                     adapter.clear()
@@ -88,17 +94,19 @@ class SearchActivity : AppCompatActivity() {
 
                                     for(i in 0 until arrayList.size){
                                         var poiItem : TMapPOIItem = arrayList.get(i)
-                                        val secondLine = StringUtils.join(
-                                                '/',
-                                                arrayOf(
-                                                        poiItem.upperBizName,
-                                                        poiItem.middleBizName,
-                                                        poiItem.lowerBizName
-                                                        //poiItem.detailBizName
-                                                )
-                                        )
-                                        adapter.addItem(poiItem.poiName, secondLine)
 
+                                        Log.d("아이템", "${arrayList.get(i)}")
+                                        val distance = poiItem.getDistance(TMapPoint(lat, lon)).toInt()
+                                        /*val secondLine = StringUtils.join('/', arrayOf(
+                                            poiItem.upperBizName,
+                                            poiItem.middleBizName,
+                                            poiItem.lowerBizName
+                                        ))*/
+
+                                        val secondLine = StringUtils.join('/', arrayOf(
+                                            "1","2","3"
+                                        ))
+                                        adapter.addItem(poiItem.poiName, "현재 위치로 부터 ${distance}m 떨어져 있습니다.")
 
                                         val poi = POI()
                                         poi.name = poiItem.poiName
@@ -118,5 +126,14 @@ class SearchActivity : AppCompatActivity() {
             }
         })
 
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        when(requestCode){
+            2 -> {
+
+            }
+        }
     }
 }

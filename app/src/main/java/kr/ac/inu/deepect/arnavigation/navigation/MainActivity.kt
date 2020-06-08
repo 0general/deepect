@@ -820,6 +820,8 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                                                 adapter.clear()
                                                 arrayPOI.clear()
 
+                                                Restart_Point = TMapPoint(arrayList.get(0).poiPoint.latitude, arrayList.get(0).poiPoint.longitude)
+
                                                 for (i in 0 until arrayList.size) {
                                                     var poiItem: TMapPOIItem = arrayList.get(i)
 
@@ -833,6 +835,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                                                         "현재 위치로 부터 ${distance}m 떨어져 있습니다."
                                                     )
 
+
                                                     val poi = POI()
                                                     poi.name = poiItem.poiName
                                                     poi.latitude = poiItem.poiPoint.latitude
@@ -841,8 +844,13 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                                                     arrayPOI.add(poi)
                                                 }
                                                 adapter.notifyDataSetChanged()
-                                                popup.visibility = View.VISIBLE
-                                                aroundcontroller = 1
+                                                //popup.visibility = View.VISIBLE
+                                                //aroundcontroller = 1
+
+                                                if(Restart_Point != null){
+                                                    setNavigationMode(true)
+                                                }
+
                                             }
                                         })
                                     }
@@ -851,7 +859,6 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                             Log.d("Exception", e.message)
                         }
                     }
-
                 }
 
                 else -> {
@@ -868,7 +875,12 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
         try {
             when(id) {
                 R.id.nav_search -> {
+                    Log.d("좌표", "${Now_Point}")
                     val intent = Intent(this , SearchActivity::class.java)
+
+                        intent.putExtra("lat", Now_Point!!.latitude)
+                        intent.putExtra("lon", Now_Point!!.longitude)
+
                     startActivityForResult(intent, REQUEST_SEARCH)
                 }
                 R.id.nav_history -> {
