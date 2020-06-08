@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.AdapterView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.skt.Tmap.TMapData
@@ -42,6 +43,12 @@ class AroundActivity : AppCompatActivity() {
 
         val adapter = SearchListAdapter()
         arrayPOI = ArrayList<POI>()
+
+        val resultintent = intent
+        val lat = resultintent.getDoubleExtra("lat", 0.0)
+        val lon = resultintent.getDoubleExtra("lon", 0.0)
+
+        Log.d("넘어오냐", "${lat}, ${lon}")
 
         lvSearch_around.adapter = adapter
 
@@ -81,41 +88,56 @@ class AroundActivity : AppCompatActivity() {
         btnSearch_around.setOnClickListener(object : View.OnClickListener{
             override fun onClick(v: View?) {
                 try{
-                    mapData.findAroundNamePOI(TMapPoint(37.37748,126.65333), "lotteria", object : TMapData.FindAroundNamePOIListenerCallback {
-                        override fun onFindAroundNamePOI(arrayList: java.util.ArrayList<TMapPOIItem>) {
+                    mapData.findAroundNamePOI(TMapPoint(lat, lon), editSearch_around.text.toString(), object : TMapData.FindAroundNamePOIListenerCallback {
+                        override fun onFindAroundNamePOI(arrayList: java.util.ArrayList<TMapPOIItem>?) {
                             runOnUiThread(object : Runnable {
                                 override fun run() {
-                                    adapter.clear()
-                                    arrayPOI.clear()
+                                    if (arrayList == null) {
+                                        Toast.makeText(
+                                            this@AroundActivity,
+                                            "그러한 카테고리는 없습니다.",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    } else {
+                                        adapter.clear()
+                                        arrayPOI.clear()
 
-                                    for(i in 0 until arrayList.size){
-                                        var poiItem : TMapPOIItem = arrayList.get(i)
+                                        for (i in 0 until arrayList.size) {
+                                            var poiItem: TMapPOIItem = arrayList.get(i)
 
-                                        Log.d("아이템", "${arrayList.get(i)}")
-                                        val distance = poiItem.getDistance(TMapPoint(37.37748,126.65333)).toInt()
-                                        /*val secondLine = StringUtils.join('/', arrayOf(
+                                            Log.d("아이템", "${arrayList.get(i)}")
+                                            val distance =
+                                                poiItem.getDistance(TMapPoint(lat, lon)).toInt()
+                                            /*val secondLine = StringUtils.join('/', arrayOf(
                                             poiItem.upperBizName,
                                             poiItem.middleBizName,
                                             poiItem.lowerBizName
                                         ))*/
 
-                                        val secondLine = StringUtils.join('/', arrayOf(
-                                            "1","2","3"
-                                        ))
-                                        adapter.addItem(poiItem.poiName, "현재 위치로 부터 ${distance} 떨어져 있습니다.")
+                                            val secondLine = StringUtils.join(
+                                                '/', arrayOf(
+                                                    "1", "2", "3"
+                                                )
+                                            )
+                                            adapter.addItem(
+                                                poiItem.poiName,
+                                                "현재 위치로 부터 ${distance}m 떨어져 있습니다."
+                                            )
 
-                                        val poi = POI()
-                                        poi.name = poiItem.poiName
-                                        poi.latitude = poiItem.poiPoint.latitude
-                                        poi.longitute = poiItem.poiPoint.longitude
+                                            val poi = POI()
+                                            poi.name = poiItem.poiName
+                                            poi.latitude = poiItem.poiPoint.latitude
+                                            poi.longitute = poiItem.poiPoint.longitude
 
-                                        arrayPOI.add(poi)
+                                            arrayPOI.add(poi)
+                                        }
+                                        adapter.notifyDataSetChanged()
                                     }
-                                    adapter.notifyDataSetChanged()
                                 }
                             })
                         }
                     })
+
                 }catch (e : Exception){
                     Log.d("Exception", e.message)
                 }

@@ -794,6 +794,19 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                         mapView.setCenterPoint(longitude, latitude)
                     }
                 }
+                REQUEST_AROUND ->{
+                    setNavigationMode(false)
+
+                    val name = data?.getStringExtra("POI")
+                    val longitude = data?.getDoubleExtra("LON", 0.0)
+                    val latitude = data?.getDoubleExtra("LAT", 0.0)
+
+                    if(latitude != null && longitude != null) {
+                        val mapPoint = TMapPoint(latitude, longitude)
+                        setDestination(mapPoint)
+                        mapView.setCenterPoint(longitude, latitude)
+                    }
+                }
                 REQUEST_AR -> {
                     moveToCurrentLocation()
                     val poi = data?.getStringExtra("POI")
@@ -875,12 +888,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
         try {
             when(id) {
                 R.id.nav_search -> {
-                    Log.d("좌표", "${Now_Point}")
                     val intent = Intent(this , SearchActivity::class.java)
-
-                        intent.putExtra("lat", Now_Point!!.latitude)
-                        intent.putExtra("lon", Now_Point!!.longitude)
-
                     startActivityForResult(intent, REQUEST_SEARCH)
                 }
                 R.id.nav_history -> {
@@ -889,6 +897,11 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                 }
                 R.id.nav_around -> {
                     val intent = Intent(this, AroundActivity::class.java)
+
+                    Log.d("좌표", "${Now_Point}")
+                    intent.putExtra("lat", Now_Point!!.latitude)
+                    intent.putExtra("lon", Now_Point!!.longitude)
+
                     startActivityForResult(intent, REQUEST_AROUND)
                 }
             }

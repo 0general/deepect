@@ -13,7 +13,7 @@
                 android:title="최근기록"/>
             <item
                 android:id = "@+id/nav_around"
-                android:title="내주위"/>
+                android:title="카테고리검색"/>
 
         </menu>
     </item>
