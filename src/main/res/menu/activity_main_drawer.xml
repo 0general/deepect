@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:tools="http://schemas.android.com/tools"
     xmlns:android="http://schemas.android.com/apk/res/android">
+
     <item android:title="내비게이션">
         <menu>
             <item
                 android:id = "@+id/nav_search"
-                android:title="장소검색"/>
+                android:title="장소 검색"/>
             <item
                 android:id = "@+id/nav_history"
-                android:title="최근기록"/>
+                android:title="최근 기록"/>
             <item
                 android:id = "@+id/nav_around"
-                android:title="내주위"/>
+                android:title="카테고리 검색"/>
+
         </menu>
     </item>
 </menu>

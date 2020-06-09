@@ -27,7 +27,7 @@ class ConnectServer(private val file : File, eventListener: EventListener?) : Th
     private lateinit var sis : DataInputStream
 
     private val port = 8000
-    private val ip = "192.168.0.13"
+    private val ip = "3.12.250.104"
     private lateinit var mHandler: SocketHandler
     private lateinit var mThread: Thread
 

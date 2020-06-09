@@ -80,6 +80,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
     private val REQUEST_SEARCH = 0x0001
     private val REQUEST_HISTORY = 0x0002
     private val REQUEST_AROUND = 0x0003
+    private val REQUEST_AR = 0x0004
 
 
     lateinit var adapter: SearchListAdapter
@@ -104,11 +105,6 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val intent = getIntent()
-        if (intent.getStringExtra("result") != null) {
-            // blah blah
-        }
-
 
         setContentView(R.layout.activity_main)
         mapView = TMapView(this)
@@ -135,28 +131,29 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
             btnAR.setOnClickListener{
                 val intent = Intent(this, ARActivity::class.java)
-                startActivity(intent)
+                startActivityForResult(intent, REQUEST_AR)
             }
 
-            connectserver.setOnClickListener {
-                val connetion = ConnectServer(
-                        File("/mnt/sdcard/DCIM/Camera/20180729_194225_HDR.jpg"),
-                        object : ConnectServer.EventListener {
-                            override fun onSocketResult(result: String) {
-                                toolbar.setTitle(result + "을 찾아라!")
-                                category = result
-                            }
-
-                            override fun onSocketFailed() {
-                                val builder = AlertDialog.Builder(this@MainActivity)
-                                        .setTitle("안내")
-                                        .setMessage("실패")
-                                        .setPositiveButton("확인", null)
-                                        .show()
-                            }
-                        })
-                connetion.start()
-            }
+//            connectserver.setOnClickListener {
+//                val connetion = ConnectServer(
+//                        File("/mnt/sdcard/DCIM/Camera/20180729_194225_HDR.jpg"),
+//                        object : ConnectServer.EventListener {
+//                            override fun onSocketResult(result: String) {
+//                                toolbar.setTitle(result + "을 찾아라!")
+//                                category = result
+//
+//                            }
+//
+//                            override fun onSocketFailed() {
+//                                val builder = AlertDialog.Builder(this@MainActivity)
+//                                        .setTitle("안내")
+//                                        .setMessage("실패")
+//                                        .setPositiveButton("확인", null)
+//                                        .show()
+//                            }
+//                        })
+//                connetion.start()
+//            }
 
             popup.setOnItemClickListener(object : AdapterView.OnItemClickListener{
                 override fun onItemClick(
@@ -183,6 +180,7 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                                         }
                                         popup.visibility = View.GONE
                                         aroundcontroller = 0
+
 
                                         if(destination != null){
                                             setNavigationMode(true)
@@ -782,6 +780,85 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                         mapView.setCenterPoint(longitude, latitude)
                     }
                 }
+                REQUEST_AROUND ->{
+                    setNavigationMode(false)
+
+                    val name = data?.getStringExtra("POI")
+                    val longitude = data?.getDoubleExtra("LON", 0.0)
+                    val latitude = data?.getDoubleExtra("LAT", 0.0)
+
+                    if(latitude != null && longitude != null) {
+                        val mapPoint = TMapPoint(latitude, longitude)
+                        setDestination(mapPoint)
+                        mapView.setCenterPoint(longitude, latitude)
+                    }
+                }
+                REQUEST_AR -> {
+                    moveToCurrentLocation()
+                    val poi = data?.getStringExtra("POI")
+                    val lat = data?.getDoubleExtra("LAT", 0.0)
+                    val lon = data?.getDoubleExtra("LON", 0.0)
+
+                    if(lat != null && lon != null) {
+                        val mapPoint = TMapPoint(lat, lon)
+                        setDestination(mapPoint)
+                        mapView.setCenterPoint(lon, lat)
+                    }
+
+                    if (Now_Point == null) {
+                        Toast.makeText(this@MainActivity, "내 위치가 설정되지 않았습니다." ,Toast.LENGTH_SHORT )
+                    } else {
+                        try {
+                            mapData.findAroundNamePOI(
+                                    Now_Point,
+                                    poi,
+                                    object : TMapData.FindAroundNamePOIListenerCallback {
+                                        override fun onFindAroundNamePOI(arrayList: java.util.ArrayList<TMapPOIItem>) {
+                                            runOnUiThread(object : Runnable {
+                                                override fun run() {
+                                                    adapter.clear()
+                                                    arrayPOI.clear()
+
+                                                    Restart_Point = TMapPoint(arrayList.get(0).poiPoint.latitude, arrayList.get(0).poiPoint.longitude)
+
+                                                    for (i in 0 until arrayList.size) {
+                                                        var poiItem: TMapPOIItem = arrayList.get(i)
+
+                                                        Log.d("아이템", "${arrayList.get(i)}")
+                                                        val distance =
+                                                                poiItem.getDistance(Now_Point)
+                                                                        .toInt()
+
+                                                        adapter.addItem(
+                                                                poiItem.poiName,
+                                                                "현재 위치로 부터 ${distance}m 떨어져 있습니다."
+                                                        )
+
+
+                                                        val poi = POI()
+                                                        poi.name = poiItem.poiName
+                                                        poi.latitude = poiItem.poiPoint.latitude
+                                                        poi.longitute = poiItem.poiPoint.longitude
+
+                                                        arrayPOI.add(poi)
+                                                    }
+                                                    adapter.notifyDataSetChanged()
+                                                    //popup.visibility = View.VISIBLE
+                                                    //aroundcontroller = 1
+
+                                                    if(Restart_Point != null){
+                                                        setNavigationMode(true)
+                                                    }
+
+                                                }
+                                            })
+                                        }
+                                    })
+                        } catch (e: Exception) {
+                            Log.d("Exception", e.message)
+                        }
+                    }
+                }
 
                 else -> {
                     super.onActivityResult(requestCode, resultCode, data)
@@ -806,6 +883,11 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
                 }
                 R.id.nav_around -> {
                     val intent = Intent(this, AroundActivity::class.java)
+
+                    Log.d("좌표", "${Now_Point}")
+                    intent.putExtra("lat", Now_Point!!.latitude)
+                    intent.putExtra("lon", Now_Point!!.longitude)
+
                     startActivityForResult(intent, REQUEST_AROUND)
                 }
             }
@@ -940,5 +1022,4 @@ class MainActivity : AppCompatActivity(),  NavigationView.OnNavigationItemSelect
 
         }
     }
-
 }

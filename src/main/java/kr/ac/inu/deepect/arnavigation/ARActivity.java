@@ -1,5 +1,6 @@
 package kr.ac.inu.deepect.arnavigation;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -18,6 +19,7 @@ import android.view.PixelCopy;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -190,6 +192,7 @@ public class ARActivity extends AppCompatActivity {
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     private void takePhoto() {
+        Toast.makeText(getBaseContext(), "사진 처리 중입니다. 잠시만 기다려주세요.", Toast.LENGTH_LONG).show();
         final String filename = generateFilename();
         ArSceneView view = arSceneView;
 
@@ -231,33 +234,35 @@ public class ARActivity extends AppCompatActivity {
                 Uri photoURI = FileProvider.getUriForFile(ARActivity.this,
                             ARActivity.this.getPackageName() + ".ar.codelab.name.provider",
                             photoFile);
-                Toast.makeText(this, "캡쳐되었습니다.", Toast.LENGTH_SHORT);
                 ConnectServer connectServer = new ConnectServer(photoFile,
                         new ConnectServer.EventListener() {
-                    public void onSocketResult(String result) {
-                        AlertDialog.Builder builder = new AlertDialog.Builder(ARActivity.this);
-                        builder.setTitle("안내")
-                                .setMessage(result + "을(를) 출발지로 다시 설정하시겠습니까?")
-                                .setNegativeButton("아니오", null)
-                                .setPositiveButton("예", new DialogInterface.OnClickListener(){
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        Intent intent = new Intent(ARActivity.this, MainActivity.class);
-                                        intent.putExtra("start", result);
-                                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                        startActivity(intent);
-                                    }
-                        }).show();
-                    }
+                            public void onSocketResult(String result) {
+                                AlertDialog.Builder builder = new AlertDialog.Builder(ARActivity.this);
+                                builder.setTitle("안내")
+                                        .setMessage(result + "을(를) 출발지로 다시 설정하시겠습니까?")
+                                        .setNegativeButton("아니오", null)
+                                        .setPositiveButton("예", new DialogInterface.OnClickListener(){
+                                            @Override
+                                            public void onClick(DialogInterface dialog, int which) {
+                                                Intent intent = new Intent(ARActivity.this, MainActivity.class);
+                                                intent.putExtra("POI", result);
+                                                intent.putExtra("LAT", destination.getLatitude());
+                                                intent.putExtra("LON", destination.getLongitude());
+                                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                                setResult(Activity.RESULT_OK, intent);
+                                                finish();
+                                            }
+                                        }).show();
+                            }
 
-                    public void onSocketFailed() {
-                        AlertDialog.Builder builder = new AlertDialog.Builder(ARActivity.this);
-                        builder.setTitle("안내")
-                                .setMessage("실패")
-                                .setPositiveButton("확인", null)
-                                .show();
-                    }
-                });
+                            public void onSocketFailed() {
+                                AlertDialog.Builder builder = new AlertDialog.Builder(ARActivity.this);
+                                builder.setTitle("안내")
+                                        .setMessage("실패")
+                                        .setPositiveButton("확인", null)
+                                        .show();
+                            }
+                        });
                 connectServer.start();
 //                Intent intent = new Intent(Intent.ACTION_VIEW, photoURI);
 //                intent.setDataAndType(photoURI, "image/*");
@@ -310,10 +315,13 @@ public class ARActivity extends AppCompatActivity {
         TextView descIndexView = findViewById(R.id.descIndexView);
         TextView correctionView = findViewById(R.id.correctionView);
         TextView accuracyView = findViewById(R.id.accuracyView);
+        // TextView destinationView = findViewById(R.id.destinationView);
         correctionView.setVisibility(View.INVISIBLE);
 
         descIndexView.setText(String.valueOf(descIndex + 1));
         descView.setText(descriptions.get(descIndex));
+        descView.setTypeface(null, Typeface.BOLD);
+        //destinationView.setVisibility(View.INVISIBLE);
 
         Button btnNext = findViewById(R.id.btnNext);
         btnNext.setOnClickListener(new Button.OnClickListener() {
@@ -324,7 +332,8 @@ public class ARActivity extends AppCompatActivity {
                 }
                 else if (descIndex == descriptions.size()-2) {
                     descIndex++;
-                    descIndexView.setVisibility(View.INVISIBLE);
+                    descIndexView.setBackgroundResource(R.drawable.destination_layout_style);
+                    descIndexView.setText("");
                     descView.setText(descriptions.get(descIndex));
                 }
                 else {
@@ -343,8 +352,8 @@ public class ARActivity extends AppCompatActivity {
                     return;
                 }
                 else if (descIndex == descriptions.size()-1) {
-                    descIndexView.setVisibility(View.VISIBLE);
                     descIndex--;
+                    descIndexView.setBackgroundResource(R.drawable.roadsign_layout_desc_style);
                     descIndexView.setText(String.valueOf(descIndex + 1));
                     descView.setText(descriptions.get(descIndex));
                 }
@@ -535,9 +544,9 @@ public class ARActivity extends AppCompatActivity {
                             prevLocationMarker = layoutLocationMarker;
 
                             layoutLocationMarker.setScalingMode(LocationMarker.ScalingMode.SIMPLE_SCALING);
-                            layoutLocationMarker.setGradualScalingMaxScale(4F);
-                            layoutLocationMarker.setGradualScalingMinScale(1F);
-                            layoutLocationMarker.setOnlyRenderWhenWithin(400);
+                            layoutLocationMarker.setGradualScalingMaxScale(3.5F);
+                            layoutLocationMarker.setGradualScalingMinScale(1.8F);
+                            layoutLocationMarker.setOnlyRenderWhenWithin(350);
 
                             layoutLocationMarker.setRenderEvent(new LocationNodeRender() {
                                 @Override
@@ -548,9 +557,24 @@ public class ARActivity extends AppCompatActivity {
                                     View eView = roadsignLayoutRendarable.getView();
                                     TextView roadsignTextView = eView.findViewById(R.id.textView);
                                     roadsignTextView.setTypeface(null, Typeface.BOLD);
+                                    LinearLayout roadsignLayout = eView.findViewById(R.id.roadsignLayout);
+                                    String arrow;
                                     int index = finalI + 1;
                                     String indexString = Integer.toString(index);
-                                    String arrow;
+                                    if (node.getDistance() > 100) {
+                                        roadsignLayout.setBackgroundResource(R.drawable.roadsign_layout_style_half);
+                                        roadsignTextView.setText(indexString);
+                                    }
+                                    else {
+                                        roadsignLayout.setBackgroundResource(R.drawable.roadsign_layout_style);
+                                        if (angle >= 30)
+                                            arrow = "→";
+                                        else if (angle <= -30)
+                                            arrow = "←";
+                                        else
+                                            arrow = "↑";
+                                        roadsignTextView.setText(indexString + '\n' +  arrow);
+                                    }
                                     if (DeviceLocation.getIsAccuracyLow()) {
                                         accuracyView.setBackgroundResource(R.drawable.accuracy_style_red);
                                     }
@@ -573,13 +597,6 @@ public class ARActivity extends AppCompatActivity {
 //                                        arrow = "↙";
 //                                    else
 //                                        arrow = "";
-                                    if (angle >= 30)
-                                        arrow = "→";
-                                    else if (angle <= -30)
-                                        arrow = "←";
-                                    else
-                                        arrow = "↑";
-                                    roadsignTextView.setText(indexString + '\n' +  arrow);
                                 }
                             });
                             // Adding the marker
@@ -591,7 +608,7 @@ public class ARActivity extends AppCompatActivity {
                         node.setRenderable(targetRenderable);
                         locationMarker.setScalingMode(LocationMarker.ScalingMode.SIMPLE_SCALING);
                         locationMarker.setGradualScalingMaxScale(4F);
-                        locationMarker.setGradualScalingMinScale(1F);
+                        locationMarker.setGradualScalingMinScale(1.7F);
                         prevLocationMarker.setLookNode(node);
                         prevLocationMarker = locationMarker;
                         LocationScene.mLocationMarkers.add(locationMarker);

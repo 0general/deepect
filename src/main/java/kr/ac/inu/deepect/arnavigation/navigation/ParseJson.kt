@@ -39,12 +39,14 @@ class ParseJson {
 
                         var name = props.getString("name")
                         var description = props.getString("description")
+                        setMiddleNodes(coord.getDouble(1), coord.getDouble(0), description)
+
 
                         if(name.equals("")){
                             name = description
                             description = ""
                         }
-                        setMiddleNodes(coord.getDouble(1), coord.getDouble(0), description)
+
 
                         //popupListItems.add(PopupListItem(name, description, false, points))
                     } else if (type.equals("LineString")) {

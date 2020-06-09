@@ -39,6 +39,8 @@ class SearchActivity : AppCompatActivity() {
 
         mapData = TMapData()
 
+
+
         val adapter = SearchListAdapter()
         arrayPOI = ArrayList<POI>()
         lvSearch.adapter = adapter
@@ -98,7 +100,6 @@ class SearchActivity : AppCompatActivity() {
                                                 )
                                         )
                                         adapter.addItem(poiItem.poiName, secondLine)
-
 
                                         val poi = POI()
                                         poi.name = poiItem.poiName

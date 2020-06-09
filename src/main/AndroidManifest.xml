@@ -53,7 +53,7 @@
             android:screenOrientation="fullUser"
             android:theme="@style/AppTheme.NoActionBar"/>
         <activity
-            android:name="kr.ac.inu.deepect.arnavigation.navigation.AroundActivity"
+            android:name="kr.ac.inu.deepect.arnavigation.navigation.SearchActivity"
             android:label="장소 검색"
             android:screenOrientation="fullUser"
             />
@@ -62,7 +62,11 @@
             android:label="최근 기록"
             android:screenOrientation="fullUser"
             android:parentActivityName="kr.ac.inu.deepect.arnavigation.navigation.MainActivity"/>
-
+        <activity
+            android:name="kr.ac.inu.deepect.arnavigation.navigation.AroundActivity"
+            android:label="카테고리 검색"
+            android:screenOrientation="fullUser"
+            />
         <activity
             android:name="kr.ac.inu.deepect.arnavigation.ARActivity"
             android:label="@string/app_name"
